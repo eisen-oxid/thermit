@@ -11,9 +11,9 @@ jobs:
     - name: Setup
       run: cd client && cargo check
     - name: Run Lint
-      run: cd server && cargo clippy -- -Dwarnings
+      run: cd client && cargo clippy -- -Dwarnings
     - name: Test
-      run: cd server && cargo test
+      run: cd client && cargo test
   server:
     runs-on: ubuntu-latest
     steps:
