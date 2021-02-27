@@ -1,35 +1,66 @@
-use crate::Pool;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::schema::users;
-use crate::schema::users::dsl::*;
 
-use actix_web::web;
-
-#[derive(Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Deserialize, Queryable, Insertable)]
+#[table_name = "users"]
 pub struct User {
     pub id: i32,
     pub username: String,
     pub password: String,
 }
 // decode request data
-#[derive(Deserialize)]
+#[derive(Deserialize, Insertable, AsChangeset, Debug)]
+#[table_name = "users"]
 pub struct UserData {
     pub username: String,
-}
-// this is to insert users to database
-#[derive(Insertable, Debug)]
-#[table_name = "users"]
-pub struct NewUser<'a> {
-    pub username: &'a str,
-    pub password: &'a str,
+    pub password: String,
 }
 
 impl User {
-    pub fn find_all(pool: web::Data<Pool>) -> Result<Vec<User>, diesel::result::Error> {
-        let conn = pool.get().unwrap();
-        let items = users.load::<User>(&conn)?;
+    pub fn find_all(conn: &PgConnection) -> Result<Vec<Self>, diesel::result::Error> {
+        use crate::schema::users::dsl::*;
+
+        let items = users.load::<User>(conn)?;
         Ok(items)
+    }
+
+    pub fn find(conn: &PgConnection, user_id: i32) -> Result<Option<Self>, diesel::result::Error> {
+        use crate::schema::users::dsl::*;
+
+        let user = users.find(user_id).get_result::<User>(conn).optional()?;
+
+        Ok(user)
+    }
+
+    pub fn create(user_data: UserData, conn: &PgConnection) -> Result<Self, diesel::result::Error> {
+        use crate::schema::users::dsl::*;
+
+        let new_user = diesel::insert_into(users)
+            .values(&user_data)
+            .get_result(conn)?;
+        Ok(new_user)
+    }
+
+    pub fn update(
+        user_id: i32,
+        user_data: UserData,
+        conn: &PgConnection,
+    ) -> Result<Self, diesel::result::Error> {
+        use crate::schema::users::dsl::*;
+
+        let user = diesel::update(users.find(user_id))
+            .set(user_data)
+            .get_result(conn)?;
+
+        Ok(user)
+    }
+
+    pub fn destroy(conn: &PgConnection, user_id: i32) -> Result<usize, diesel::result::Error> {
+        use crate::schema::users::dsl::*;
+
+        let count = diesel::delete(users.find(user_id)).execute(conn)?;
+        Ok(count)
     }
 }
