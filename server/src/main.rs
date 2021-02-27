@@ -6,6 +6,7 @@ use actix_web::{post, web, App, HttpRequest, HttpResponse, HttpServer, Responder
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 
+mod errors;
 mod schema;
 mod user;
 

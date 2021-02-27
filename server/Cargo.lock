@@ -1352,6 +1352,7 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "derive_more",
  "diesel",
  "dotenv",
  "r2d2",
