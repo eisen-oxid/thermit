@@ -1,5 +1,4 @@
 use crate::Pool;
-use diesel;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
