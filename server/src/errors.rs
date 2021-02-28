@@ -11,6 +11,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Internal Server Error")]
     NotFound,
+
+    #[display(fmt = "Internal Server Error")]
+    NoContent,
 }
 impl ServiceError {
     pub fn json_message(msg: &str) -> serde_json::Value {
@@ -33,6 +36,7 @@ impl ResponseError for ServiceError {
         match *self {
             ServiceError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             ServiceError::NotFound => StatusCode::NOT_FOUND,
+            ServiceError::NoContent => StatusCode::NO_CONTENT,
         }
     }
 
@@ -43,6 +47,9 @@ impl ResponseError for ServiceError {
             }
             ServiceError::NotFound => {
                 HttpResponse::NotFound().json(ServiceError::json_message("Not found"))
+            }
+            ServiceError::NoContent => {
+                HttpResponse::NoContent().json(ServiceError::json_message("No content"))
             }
         }
     }
