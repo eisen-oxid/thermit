@@ -61,7 +61,13 @@ impl User {
     ) -> Result<Self, diesel::result::Error> {
         use crate::schema::users::dsl::*;
 
-        user_data.password = User::generate_password(&*user_data.password);
+        // If no password is specified, do not update it
+        if !user_data.password.is_empty() {
+            user_data.password = User::generate_password(&*user_data.password);
+        } else {
+            let old_password = User::find(&conn, user_id).unwrap().unwrap().password;
+            user_data.password = old_password;
+        }
 
         let user = diesel::update(users.find(user_id))
             .set(user_data)
