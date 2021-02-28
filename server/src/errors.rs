@@ -5,6 +5,8 @@ use diesel::result::Error as DieselError;
 use serde::Serialize;
 use serde_json::json;
 
+use crate::user::auth::AuthenticationError;
+
 #[derive(Debug, Display, Error, Serialize)]
 pub enum ServiceError {
     #[display(fmt = "Internal Server Error")]
@@ -31,6 +33,17 @@ impl From<DieselError> for ServiceError {
             DieselError::DatabaseError(_, _) => ServiceError::InternalServerError,
             DieselError::NotFound => ServiceError::NotFound,
             _ => ServiceError::InternalServerError,
+        }
+    }
+}
+
+impl From<AuthenticationError> for ServiceError {
+    fn from(error: AuthenticationError) -> ServiceError {
+        match error {
+            AuthenticationError::IncorrectPassword => ServiceError::Forbidden,
+            AuthenticationError::UserNotFound => ServiceError::NotFound,
+            AuthenticationError::BcryptError(_) => ServiceError::InternalServerError,
+            AuthenticationError::DatabaseError(_) => ServiceError::InternalServerError,
         }
     }
 }

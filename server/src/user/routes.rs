@@ -83,20 +83,17 @@ pub async fn delete(
     }
 }
 
-#[post("/users/{id}/auth")]
+#[post("/auth")]
 pub async fn authenticate(
     pool: web::Data<Pool>,
-    id: web::Path<Uuid>,
     user_data: web::Json<UserData>,
 ) -> Result<HttpResponse, ServiceError> {
     let conn = pool.get().expect("couldn't get db connection from pool");
-    let auth_token =
-        web::block(move || User::authenticate(&conn, user_data.into_inner(), id.into_inner()))
-            .await;
+    let auth_token = web::block(move || User::authenticate(&conn, user_data.into_inner())).await;
     match auth_token {
         Ok(token) => Ok(HttpResponse::Ok().json(token)),
         Err(e) => match e {
-            BlockingError::Error(e) => Err(e),
+            BlockingError::Error(e) => Err(ServiceError::from(e)),
             BlockingError::Canceled => Err(ServiceError::InternalServerError),
         },
     }
