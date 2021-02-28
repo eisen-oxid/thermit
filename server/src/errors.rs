@@ -2,9 +2,10 @@ use actix_web::http::StatusCode;
 use actix_web::{error::ResponseError, HttpResponse};
 use derive_more::{Display, Error};
 use diesel::result::Error as DieselError;
+use serde::Serialize;
 use serde_json::json;
 
-#[derive(Debug, Display, Error)]
+#[derive(Debug, Display, Error, Serialize)]
 pub enum ServiceError {
     #[display(fmt = "Internal Server Error")]
     InternalServerError,
@@ -14,6 +15,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Internal Server Error")]
     NoContent,
+
+    #[display(fmt = "Internal Server Error")]
+    Forbidden,
 }
 impl ServiceError {
     pub fn json_message(msg: &str) -> serde_json::Value {
@@ -37,6 +41,7 @@ impl ResponseError for ServiceError {
             ServiceError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             ServiceError::NotFound => StatusCode::NOT_FOUND,
             ServiceError::NoContent => StatusCode::NO_CONTENT,
+            ServiceError::Forbidden => StatusCode::FORBIDDEN,
         }
     }
 
@@ -50,6 +55,9 @@ impl ResponseError for ServiceError {
             }
             ServiceError::NoContent => {
                 HttpResponse::NoContent().json(ServiceError::json_message("No content"))
+            }
+            ServiceError::Forbidden => {
+                HttpResponse::Forbidden().json(ServiceError::json_message("Access forbidden"))
             }
         }
     }
