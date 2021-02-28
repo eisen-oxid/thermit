@@ -10,6 +10,9 @@ mod errors;
 mod schema;
 mod user;
 
+#[cfg(test)]
+mod test_helpers;
+
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 #[actix_web::main]

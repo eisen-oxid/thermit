@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::schema::users;
 
-#[derive(Serialize, Deserialize, Queryable, Insertable)]
+#[derive(Serialize, Deserialize, Queryable, Insertable, PartialEq, Debug)]
 #[table_name = "users"]
 pub struct User {
     pub id: Uuid,
@@ -13,7 +13,7 @@ pub struct User {
     pub password: String,
 }
 // decode request data
-#[derive(Deserialize, Insertable, AsChangeset, Debug)]
+#[derive(Clone, Deserialize, Insertable, AsChangeset, Debug)]
 #[table_name = "users"]
 pub struct UserData {
     pub username: String,
@@ -81,5 +81,116 @@ impl User {
 
         let count = diesel::delete(users.find(user_id)).execute(conn)?;
         Ok(count)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_helpers::*;
+
+    fn create_user_data() -> UserData {
+        UserData {
+            username: String::from("username"),
+            password: String::from("password"),
+        }
+    }
+
+    fn setup_user(conn: &PgConnection) -> User {
+        User::create(create_user_data(), conn).unwrap()
+    }
+
+    #[test]
+    fn create_returns_new_user() {
+        let conn = connection();
+
+        let user_data = create_user_data();
+        let user = User::create(user_data.clone(), &conn).unwrap();
+        assert_eq!(user.username, user_data.username);
+        assert_eq!(user.password, user_data.password);
+    }
+
+    #[test]
+    fn find_returns_none_when_no_user_exists() {
+        let conn = connection();
+
+        assert!(matches!(User::find(&conn, Uuid::new_v4()), Ok(None)));
+    }
+
+    #[test]
+    fn find_returns_user_when_exists() {
+        let conn = connection();
+
+        let expected = setup_user(&conn);
+        let user = User::find(&conn, expected.id).unwrap();
+
+        assert_eq!(Some(expected), user);
+    }
+
+    #[test]
+    fn find_all_returns_empty_list_when_no_users_exist() {
+        let conn = connection();
+
+        assert_eq!(User::find_all(&conn).unwrap().len(), 0);
+    }
+
+    #[test]
+    fn find_all_returns_all_users() {
+        let conn = connection();
+
+        setup_user(&conn);
+        setup_user(&conn);
+
+        let users = User::find_all(&conn).unwrap();
+
+        assert_eq!(users.len(), 2);
+        assert_ne!(users[0].id, users[1].id);
+    }
+
+    #[test]
+    fn update_fails_with_not_found_if_user_does_not_exist() {
+        let conn = connection();
+
+        let user = create_user_data();
+
+        let user = User::update(Uuid::new_v4(), user, &conn);
+        assert!(matches!(user, Err(diesel::result::Error::NotFound)));
+    }
+
+    #[test]
+    fn update_returns_updated_user_if_exists() {
+        let conn = connection();
+
+        let mut user = setup_user(&conn);
+        let update_user = UserData {
+            username: String::from("new_username"),
+            password: String::from("new_password"),
+        };
+
+        // Update user manually
+        user.username = update_user.username.clone();
+        user.password = update_user.password.clone();
+
+        let updated_user = User::update(user.id, update_user, &conn).unwrap();
+
+        assert_eq!(updated_user, user);
+    }
+
+    #[test]
+    fn destroy_returns_null_if_user_does_not_exist() {
+        let conn = connection();
+
+        let count = User::destroy(&conn, Uuid::new_v4()).unwrap();
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn destroy_returns_count_if_user_exists() {
+        let conn = connection();
+
+        let user = setup_user(&conn);
+
+        let count = User::destroy(&conn, user.id).unwrap();
+        assert_eq!(count, 1);
     }
 }
