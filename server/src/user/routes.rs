@@ -2,6 +2,7 @@ use crate::errors::ServiceError;
 use crate::user::model::{User, UserData};
 use crate::Pool;
 use actix_web::{delete, get, post, put, web, HttpResponse};
+use uuid::Uuid;
 
 #[get("/users")]
 pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
@@ -18,7 +19,10 @@ pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
 }
 
 #[get("/users/{id}")]
-pub async fn find(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpResponse, ServiceError> {
+pub async fn find(
+    pool: web::Data<Pool>,
+    id: web::Path<Uuid>,
+) -> Result<HttpResponse, ServiceError> {
     let conn = pool.get().expect("couldn't get db connection from pool");
 
     let user = web::block(move || User::find(&conn, id.into_inner()))
@@ -50,7 +54,7 @@ async fn create(
 #[put("/users/{id}")]
 pub async fn update(
     pool: web::Data<Pool>,
-    id: web::Path<i32>,
+    id: web::Path<Uuid>,
     user_data: web::Json<UserData>,
 ) -> Result<HttpResponse, ServiceError> {
     let conn = pool.get().expect("couldn't get db connection from pool");
@@ -63,7 +67,7 @@ pub async fn update(
 #[delete("/users/{id}")]
 pub async fn delete(
     pool: web::Data<Pool>,
-    user_id: web::Path<i32>,
+    user_id: web::Path<Uuid>,
 ) -> Result<HttpResponse, ServiceError> {
     let conn = pool.get().expect("couldn't get db connection from pool");
 

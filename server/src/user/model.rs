@@ -1,12 +1,13 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::schema::users;
 
 #[derive(Serialize, Deserialize, Queryable, Insertable)]
 #[table_name = "users"]
 pub struct User {
-    pub id: i32,
+    pub id: Uuid,
     pub username: String,
     pub password: String,
 }
@@ -26,7 +27,7 @@ impl User {
         Ok(items)
     }
 
-    pub fn find(conn: &PgConnection, user_id: i32) -> Result<Option<Self>, diesel::result::Error> {
+    pub fn find(conn: &PgConnection, user_id: Uuid) -> Result<Option<Self>, diesel::result::Error> {
         use crate::schema::users::dsl::*;
 
         let user = users.find(user_id).get_result::<User>(conn).optional()?;
@@ -44,7 +45,7 @@ impl User {
     }
 
     pub fn update(
-        user_id: i32,
+        user_id: Uuid,
         user_data: UserData,
         conn: &PgConnection,
     ) -> Result<Self, diesel::result::Error> {
@@ -57,7 +58,7 @@ impl User {
         Ok(user)
     }
 
-    pub fn destroy(conn: &PgConnection, user_id: i32) -> Result<usize, diesel::result::Error> {
+    pub fn destroy(conn: &PgConnection, user_id: Uuid) -> Result<usize, diesel::result::Error> {
         use crate::schema::users::dsl::*;
 
         let count = diesel::delete(users.find(user_id)).execute(conn)?;
