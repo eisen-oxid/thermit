@@ -1,7 +1,7 @@
 use diesel::prelude::*;
+use diesel::result::Error as DieselError;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use diesel::result::Error as DieselError;
 
 use crate::schema::users;
 
@@ -25,7 +25,7 @@ pub enum UserError {
     UserNotFound,
     UsernameTaken,
     DatabaseError,
-    GenericError
+    GenericError,
 }
 
 impl User {
@@ -44,10 +44,7 @@ impl User {
         Ok(user)
     }
 
-    pub fn find_by_username(
-        conn: &PgConnection,
-        u: &str,
-    ) -> Result<Option<User>, UserError> {
+    pub fn find_by_username(conn: &PgConnection, u: &str) -> Result<Option<User>, UserError> {
         use crate::schema::users::dsl::*;
 
         let user = users
@@ -58,21 +55,17 @@ impl User {
         Ok(user)
     }
 
-    fn username_taken(conn: &PgConnection,
-                      u: &str) -> bool {
+    fn username_taken(conn: &PgConnection, u: &str) -> bool {
         let user = User::find_by_username(conn, u).unwrap();
         user.is_some()
     }
 
-    pub fn create(
-        mut user_data: UserData,
-        conn: &PgConnection,
-    ) -> Result<Self, UserError> {
+    pub fn create(mut user_data: UserData, conn: &PgConnection) -> Result<Self, UserError> {
         use crate::schema::users::dsl::*;
 
         user_data.password = User::generate_password(&*user_data.password);
 
-        if User::username_taken(&conn, &*user_data.username){
+        if User::username_taken(&conn, &*user_data.username) {
             return Err(UserError::UsernameTaken);
         }
 
@@ -89,7 +82,7 @@ impl User {
     ) -> Result<Self, UserError> {
         use crate::schema::users::dsl::*;
 
-        if User::username_taken(&conn, &*user_data.username){
+        if User::username_taken(&conn, &*user_data.username) {
             return Err(UserError::UsernameTaken);
         }
 

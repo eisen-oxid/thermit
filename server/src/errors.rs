@@ -32,7 +32,7 @@ impl From<BlockingError<UserError>> for ServiceError {
     fn from(error: BlockingError<UserError>) -> ServiceError {
         match error {
             BlockingError::Error(e) => ServiceError::from(e),
-            BlockingError::Canceled => ServiceError::InternalServerError
+            BlockingError::Canceled => ServiceError::InternalServerError,
         }
     }
 }
@@ -58,7 +58,6 @@ impl From<UserError> for ServiceError {
         }
     }
 }
-
 
 impl ResponseError for ServiceError {
     fn status_code(&self) -> StatusCode {
