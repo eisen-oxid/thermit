@@ -24,12 +24,16 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool.");
 
+    let server_port = std::env::var("SERVER_PORT").expect("SERVER_PORT must be set");
+    let mut server_address = "0.0.0.0:".to_string();
+    server_address.push_str(&server_port[..]);
+
     HttpServer::new(move || {
         App::new()
             .data(pool.clone())
             .service(web::scope("/api").service(web::scope("/v1").configure(user::init_routes)))
     })
-    .bind("0.0.0.0:8000")?
+    .bind(server_address)?
     .run()
     .await
 }
