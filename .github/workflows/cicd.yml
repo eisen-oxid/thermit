@@ -14,13 +14,38 @@ jobs:
       run: cd client && cargo clippy -- -Dwarnings
     - name: Test
       run: cd client && cargo test
+
   server:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: thermit-server-test
+        # Set health checks to wait until postgres has started
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
     - uses: actions/checkout@v2
     - name: Setup
+      run: |
+        cd server
+        cargo install diesel_cli --no-default-features --features postgres
+    - name: Check
       run: cd server && cargo check
-    - name: Run Lint
+    - name: Lint
       run: cd server && cargo clippy -- -Dwarnings
     - name: Test
-      run: cd server && cargo test
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost/thermit-server-test
+      run: |
+        cd server
+        diesel migration run
+        cargo test
