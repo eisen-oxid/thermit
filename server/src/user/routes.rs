@@ -11,7 +11,7 @@ pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
     let users = web::block(move || User::find_all(&conn))
         .await
         .map_err(|_| ServiceError::InternalServerError)?;
-    if users.len() < 1 {
+    if users.is_empty() {
         Err(ServiceError::NoContent)
     } else {
         Ok(HttpResponse::Ok().json(users))

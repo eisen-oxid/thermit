@@ -1,4 +1,5 @@
 use diesel::prelude::*;
+use pwhash::bcrypt;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -20,6 +21,10 @@ pub struct UserData {
 }
 
 impl User {
+    fn generate_password(clear_password: &str) -> String {
+        bcrypt::hash(clear_password).unwrap()
+    }
+
     pub fn find_all(conn: &PgConnection) -> Result<Vec<Self>, diesel::result::Error> {
         use crate::schema::users::dsl::*;
 
@@ -35,8 +40,13 @@ impl User {
         Ok(user)
     }
 
-    pub fn create(user_data: UserData, conn: &PgConnection) -> Result<Self, diesel::result::Error> {
+    pub fn create(
+        mut user_data: UserData,
+        conn: &PgConnection,
+    ) -> Result<Self, diesel::result::Error> {
         use crate::schema::users::dsl::*;
+
+        user_data.password = User::generate_password(&*user_data.password);
 
         let new_user = diesel::insert_into(users)
             .values(&user_data)
@@ -46,10 +56,12 @@ impl User {
 
     pub fn update(
         user_id: Uuid,
-        user_data: UserData,
+        mut user_data: UserData,
         conn: &PgConnection,
     ) -> Result<Self, diesel::result::Error> {
         use crate::schema::users::dsl::*;
+
+        user_data.password = User::generate_password(&*user_data.password);
 
         let user = diesel::update(users.find(user_id))
             .set(user_data)
