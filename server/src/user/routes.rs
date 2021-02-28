@@ -11,7 +11,7 @@ pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
     // use web::block to offload blocking Diesel code without blocking server thread
     let users = web::block(move || User::find_all(&conn))
         .await
-        .map_err(|_| ServiceError::InternalServerError)?;
+        .map_err(|e| ServiceError::from(e))?;
     if users.is_empty() {
         Err(ServiceError::NoContent)
     } else {
@@ -28,7 +28,7 @@ pub async fn find(
 
     let user = web::block(move || User::find(&conn, id.into_inner()))
         .await
-        .map_err(|_| ServiceError::InternalServerError)?;
+        .map_err(|e| ServiceError::from(e))?;
 
     if let Some(user) = user {
         Ok(HttpResponse::Ok().json(user))
@@ -47,7 +47,7 @@ async fn create(
     // use web::block to offload blocking Diesel code without blocking server thread
     let user = web::block(move || User::create(user_data.into_inner(), &conn))
         .await
-        .map_err(|_| ServiceError::InternalServerError)?;
+        .map_err(|e| ServiceError::from(e))?;
 
     Ok(HttpResponse::Ok().json(user))
 }
@@ -74,7 +74,7 @@ pub async fn delete(
 
     let count = web::block(move || User::destroy(&conn, user_id.into_inner()))
         .await
-        .map_err(|_| ServiceError::InternalServerError)?;
+        .map_err(|e| ServiceError::from(e))?;
 
     if count == 0 {
         Err(ServiceError::NotFound)

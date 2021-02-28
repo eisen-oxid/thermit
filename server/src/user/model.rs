@@ -1,6 +1,7 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use diesel::result::Error as DieselError;
 
 use crate::schema::users;
 
@@ -19,15 +20,23 @@ pub struct UserData {
     pub password: String,
 }
 
+#[derive(Debug)]
+pub enum UserError {
+    UserNotFound,
+    UsernameTaken,
+    DatabaseError,
+    GenericError
+}
+
 impl User {
-    pub fn find_all(conn: &PgConnection) -> Result<Vec<Self>, diesel::result::Error> {
+    pub fn find_all(conn: &PgConnection) -> Result<Vec<Self>, UserError> {
         use crate::schema::users::dsl::*;
 
         let items = users.load::<User>(conn)?;
         Ok(items)
     }
 
-    pub fn find(conn: &PgConnection, user_id: Uuid) -> Result<Option<Self>, diesel::result::Error> {
+    pub fn find(conn: &PgConnection, user_id: Uuid) -> Result<Option<Self>, UserError> {
         use crate::schema::users::dsl::*;
 
         let user = users.find(user_id).get_result::<User>(conn).optional()?;
@@ -38,7 +47,7 @@ impl User {
     pub fn find_by_username(
         conn: &PgConnection,
         u: &str,
-    ) -> Result<Option<User>, diesel::result::Error> {
+    ) -> Result<Option<User>, UserError> {
         use crate::schema::users::dsl::*;
 
         let user = users
@@ -49,13 +58,23 @@ impl User {
         Ok(user)
     }
 
+    fn username_taken(conn: &PgConnection,
+                      u: &str) -> bool {
+        let user = User::find_by_username(conn, u).unwrap();
+        user.is_some()
+    }
+
     pub fn create(
         mut user_data: UserData,
         conn: &PgConnection,
-    ) -> Result<Self, diesel::result::Error> {
+    ) -> Result<Self, UserError> {
         use crate::schema::users::dsl::*;
 
         user_data.password = User::generate_password(&*user_data.password);
+
+        if User::username_taken(&conn, &*user_data.username){
+            return Err(UserError::UsernameTaken);
+        }
 
         let new_user = diesel::insert_into(users)
             .values(&user_data)
@@ -67,8 +86,12 @@ impl User {
         user_id: Uuid,
         mut user_data: UserData,
         conn: &PgConnection,
-    ) -> Result<Self, diesel::result::Error> {
+    ) -> Result<Self, UserError> {
         use crate::schema::users::dsl::*;
+
+        if User::username_taken(&conn, &*user_data.username){
+            return Err(UserError::UsernameTaken);
+        }
 
         // If no password is specified, do not update it
         if !user_data.password.is_empty() {
@@ -85,7 +108,7 @@ impl User {
         Ok(user)
     }
 
-    pub fn destroy(conn: &PgConnection, user_id: Uuid) -> Result<usize, diesel::result::Error> {
+    pub fn destroy(conn: &PgConnection, user_id: Uuid) -> Result<usize, UserError> {
         use crate::schema::users::dsl::*;
 
         let count = diesel::delete(users.find(user_id)).execute(conn)?;
@@ -209,5 +232,15 @@ mod tests {
 
         let count = User::destroy(&conn, user.id).unwrap();
         assert_eq!(count, 1);
+    }
+}
+
+impl From<DieselError> for UserError {
+    fn from(error: DieselError) -> UserError {
+        match error {
+            DieselError::DatabaseError(_, _) => UserError::DatabaseError,
+            DieselError::NotFound => UserError::UserNotFound,
+            _ => UserError::GenericError,
+        }
     }
 }
