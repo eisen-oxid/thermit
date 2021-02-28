@@ -24,9 +24,10 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool.");
 
+    let server_ip = std::env::var("SERVER_IP").expect("SERVER_IP must be set");
     let server_port = std::env::var("SERVER_PORT").expect("SERVER_PORT must be set");
-    let mut server_address = "0.0.0.0:".to_string();
-    server_address.push_str(&server_port[..]);
+
+    let server_address = format!("{}:{}", server_ip, server_port);
 
     HttpServer::new(move || {
         App::new()

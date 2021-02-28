@@ -13,4 +13,6 @@ We use a postgres database. You can find a configuration in the docker/postgres.
 To interact with the database, use Diesel.
 To install use `cargo install diesel_cli --no-default-features --features postgres`.
 
-Run migrations with `diesel migration run`.
+With Diesel installed, you can run migrations with `diesel migration run`. This will create the needed tables.
+
+To start the server, a `.env` file must be created that contains some settings. You can find an example in `.env.example`.
