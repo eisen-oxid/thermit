@@ -3,6 +3,7 @@ use pwhash::bcrypt;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::errors::ServiceError;
 use crate::schema::users;
 
 #[derive(Serialize, Deserialize, Queryable, Insertable, PartialEq, Debug)]
@@ -23,6 +24,10 @@ pub struct UserData {
 impl User {
     fn generate_password(clear_password: &str) -> String {
         bcrypt::hash(clear_password).unwrap()
+    }
+
+    fn check_password(self: &User, clear_password: &str) -> bool {
+        bcrypt::verify(clear_password, &*self.password)
     }
 
     pub fn find_all(conn: &PgConnection) -> Result<Vec<Self>, diesel::result::Error> {
@@ -81,6 +86,24 @@ impl User {
 
         let count = diesel::delete(users.find(user_id)).execute(conn)?;
         Ok(count)
+    }
+
+    pub fn authenticate(
+        conn: &PgConnection,
+        user_data: UserData,
+        user_id: Uuid,
+    ) -> Result<String, ServiceError> {
+        let user = User::find(&conn, user_id).unwrap();
+        match user {
+            None => Err(ServiceError::NotFound),
+            Some(u) => {
+                if u.check_password(&*user_data.password) && user_data.username == u.username {
+                    Ok(String::from("AUTH_TOKEN_NOT_IMPLEMENTED"))
+                } else {
+                    Err(ServiceError::Forbidden)
+                }
+            }
+        }
     }
 }
 
