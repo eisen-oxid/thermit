@@ -1,5 +1,5 @@
 use crate::user::auth::AuthenticationError::{DatabaseError, UserNotFound};
-use crate::user::{User, UserData};
+use crate::user::{User, UserData, UserError};
 use diesel::PgConnection;
 use pwhash::bcrypt;
 
@@ -8,7 +8,7 @@ pub enum AuthenticationError {
     IncorrectPassword,
     UserNotFound,
     BcryptError(pwhash::error::Error),
-    DatabaseError(diesel::result::Error),
+    DatabaseError(UserError),
 }
 
 impl User {

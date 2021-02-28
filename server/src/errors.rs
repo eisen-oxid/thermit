@@ -1,11 +1,12 @@
 use actix_web::http::StatusCode;
 use actix_web::{error::ResponseError, HttpResponse};
 use derive_more::{Display, Error};
-use diesel::result::Error as DieselError;
 use serde::Serialize;
 use serde_json::json;
 
 use crate::user::auth::AuthenticationError;
+use crate::user::UserError;
+use actix_web::error::BlockingError;
 
 #[derive(Debug, Display, Error, Serialize)]
 pub enum ServiceError {
@@ -27,12 +28,11 @@ impl ServiceError {
     }
 }
 
-impl From<DieselError> for ServiceError {
-    fn from(error: DieselError) -> ServiceError {
+impl From<BlockingError<UserError>> for ServiceError {
+    fn from(error: BlockingError<UserError>) -> ServiceError {
         match error {
-            DieselError::DatabaseError(_, _) => ServiceError::InternalServerError,
-            DieselError::NotFound => ServiceError::NotFound,
-            _ => ServiceError::InternalServerError,
+            BlockingError::Error(e) => ServiceError::from(e),
+            BlockingError::Canceled => ServiceError::InternalServerError
         }
     }
 }
@@ -47,6 +47,18 @@ impl From<AuthenticationError> for ServiceError {
         }
     }
 }
+
+impl From<UserError> for ServiceError {
+    fn from(error: UserError) -> ServiceError {
+        match error {
+            UserError::UserNotFound => ServiceError::NotFound,
+            UserError::UsernameTaken => ServiceError::Forbidden,
+            UserError::DatabaseError => ServiceError::InternalServerError,
+            UserError::GenericError => ServiceError::InternalServerError,
+        }
+    }
+}
+
 
 impl ResponseError for ServiceError {
     fn status_code(&self) -> StatusCode {
