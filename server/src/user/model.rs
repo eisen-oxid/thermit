@@ -55,9 +55,9 @@ impl User {
         Ok(user)
     }
 
-    fn username_taken(conn: &PgConnection, u: &str) -> bool {
-        let user = User::find_by_username(conn, u).unwrap();
-        user.is_some()
+    fn username_taken(conn: &PgConnection, u: &str) -> Result<bool, UserError> {
+        let user = User::find_by_username(conn, u)?;
+        Ok(user.is_some())
     }
 
     pub fn create(mut user_data: UserData, conn: &PgConnection) -> Result<Self, UserError> {
@@ -65,7 +65,7 @@ impl User {
 
         user_data.password = User::generate_password(&*user_data.password);
 
-        if User::username_taken(&conn, &*user_data.username) {
+        if User::username_taken(&conn, &*user_data.username)? {
             return Err(UserError::UsernameTaken);
         }
 
@@ -82,7 +82,7 @@ impl User {
     ) -> Result<Self, UserError> {
         use crate::schema::users::dsl::*;
 
-        if User::username_taken(&conn, &*user_data.username) {
+        if User::username_taken(&conn, &*user_data.username)? {
             return Err(UserError::UsernameTaken);
         }
 
