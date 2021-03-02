@@ -59,7 +59,7 @@ mod test {
     fn correct_password_authenticates_user() {
         let conn = connection();
         setup_user(&conn);
-        let user_data = create_user_data();
+        let user_data = create_user_data("testUser");
 
         assert!(User::authenticate(&conn, user_data).is_ok());
     }
@@ -68,7 +68,7 @@ mod test {
     fn incorrect_password_gives_incorrect_password() {
         let conn = connection();
         setup_user(&conn);
-        let mut user_data = create_user_data();
+        let mut user_data = create_user_data("testUser");
         user_data.password = "Wrong password".to_string();
 
         assert!(matches!(
@@ -81,8 +81,7 @@ mod test {
     fn authentication_with_unknown_username_gives_user_not_found() {
         let conn = connection();
         setup_user(&conn);
-        let mut user_data = create_user_data();
-        user_data.username = "USER_NAME_DOES_NOT_EXIST".to_string();
+        let user_data = create_user_data("USER_NAME_DOES_NOT_EXIST");
 
         assert!(matches!(
             User::authenticate(&conn, user_data),

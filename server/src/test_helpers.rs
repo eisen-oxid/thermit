@@ -8,13 +8,13 @@ pub fn connection() -> PgConnection {
     conn
 }
 
-pub fn create_user_data() -> UserData {
+pub fn create_user_data(username: &str) -> UserData {
     UserData {
-        username: String::from("testUser"),
+        username: String::from(username),
         password: String::from("12345678"),
     }
 }
 
 pub(crate) fn setup_user(conn: &PgConnection) -> User {
-    User::create(create_user_data(), conn).unwrap()
+    User::create(create_user_data("testUser"), conn).unwrap()
 }
