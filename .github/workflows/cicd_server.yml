@@ -1,24 +1,16 @@
-
-name: CI/CD
+name: Server
 
 on:
   pull_request:
+    paths:
+      - 'server/**'
   push:
     branches:
       - main
+    paths:
+      - 'server/**'
 
 jobs:
-  client:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup
-      run: cd client && cargo check
-    - name: Run Lint
-      run: cd client && cargo clippy -- -Dwarnings
-    - name: Test
-      run: cd client && cargo test
-
   server:
     runs-on: ubuntu-latest
     services:
