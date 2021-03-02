@@ -40,3 +40,16 @@ impl User {
         }
     }
 }
+
+mod test {
+    use pwhash::bcrypt;
+    use super::*;
+
+    #[test]
+    fn generate_password_hashes_password() {
+        let clear_password = "p455w0rd!";
+        let actual = User::generate_password(clear_password);
+        assert_ne!(clear_password, actual);
+        assert!(bcrypt::verify(clear_password, &actual));
+    }
+}
