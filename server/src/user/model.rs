@@ -119,7 +119,7 @@ mod tests {
     fn create_returns_new_user() {
         let conn = connection();
 
-        let user_data = create_user_data();
+        let user_data = create_user_data("testUser");
         let user = User::create(user_data.clone(), &conn).unwrap();
         assert_eq!(user.username, user_data.username);
         assert!(bcrypt::verify(user_data.password, &user.password));
@@ -129,7 +129,7 @@ mod tests {
     fn create_fails_when_username_is_taken() {
         let conn = connection();
 
-        let user_data = create_user_data();
+        let user_data = create_user_data("testUser");
         User::create(user_data.clone(), &conn).unwrap();
 
         let user = User::create(user_data.clone(), &conn);
@@ -165,7 +165,7 @@ mod tests {
         let conn = connection();
 
         setup_user(&conn);
-        setup_user(&conn);
+        User::create(create_user_data("user2"), &conn);
 
         let users = User::find_all(&conn).unwrap();
 
@@ -177,7 +177,7 @@ mod tests {
     fn update_fails_with_not_found_if_user_does_not_exist() {
         let conn = connection();
 
-        let user = create_user_data();
+        let user = create_user_data("testUser");
 
         let user = User::update(Uuid::new_v4(), user, &conn);
         assert!(matches!(user, Err(UserError::UserNotFound)));
