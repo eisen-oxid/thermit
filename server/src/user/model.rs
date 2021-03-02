@@ -101,13 +101,21 @@ mod tests {
     }
 
     #[test]
+    fn generate_password_hashes_password() {
+        let clear_password = "p455w0rd!";
+        let actual = User::generate_password(clear_password);
+        assert_ne!(clear_password, actual);
+        assert!(bcrypt::verify(clear_password, &actual));
+    }
+
+    #[test]
     fn create_returns_new_user() {
         let conn = connection();
 
         let user_data = create_user_data();
         let user = User::create(user_data.clone(), &conn).unwrap();
         assert_eq!(user.username, user_data.username);
-        assert_eq!(user.password, user_data.password);
+        assert!(bcrypt::verify(user_data.password, &user.password));
     }
 
     #[test]
@@ -169,11 +177,11 @@ mod tests {
 
         // Update user manually
         user.username = update_user.username.clone();
-        user.password = update_user.password.clone();
 
-        let updated_user = User::update(user.id, update_user, &conn).unwrap();
+        let updated_user = User::update(user.id, update_user.clone(), &conn).unwrap();
 
-        assert_eq!(updated_user, user);
+        assert_eq!(updated_user.username, user.username);
+        assert!(bcrypt::verify(update_user.password, &updated_user.password));
     }
 
     #[test]
