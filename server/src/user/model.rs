@@ -91,8 +91,8 @@ mod tests {
 
     fn create_user_data() -> UserData {
         UserData {
-            username: String::from("username"),
-            password: String::from("password"),
+            username: String::from("testUser"),
+            password: String::from("12345678"),
         }
     }
 
@@ -185,7 +185,7 @@ mod tests {
     }
 
     #[test]
-    fn destroy_returns_count_if_user_exists() {
+    fn destroy_returns_one_if_user_exists() {
         let conn = connection();
 
         let user = setup_user(&conn);
