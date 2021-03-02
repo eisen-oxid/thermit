@@ -35,13 +35,13 @@ jobs:
         cd server
         cargo install diesel_cli --no-default-features --features postgres
     - name: Check
-      run: cd server && cargo check
+      run: cd server && cargo check --verbose
     - name: Lint
-      run: cd server && cargo clippy -- -Dwarnings
+      run: cd server && cargo clippy -- -Dwarnings --verbose
     - name: Test
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost/thermit-server-test
       run: |
         cd server
         diesel migration run
-        cargo test
+        cargo test --verbose

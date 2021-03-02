@@ -16,8 +16,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup
-      run: cd client && cargo check
+      run: cd client && cargo check --verbose
     - name: Run Lint
-      run: cd client && cargo clippy -- -Dwarnings
+      run: cd client && cargo clippy -- -Dwarnings --verbose
     - name: Test
-      run: cd client && cargo test
+      run: cd client && cargo test --verbose
