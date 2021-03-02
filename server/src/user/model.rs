@@ -113,6 +113,7 @@ impl User {
 mod tests {
     use super::*;
     use crate::test_helpers::*;
+    use pwhash::bcrypt;
 
     fn create_user_data() -> UserData {
         UserData {
@@ -123,14 +124,6 @@ mod tests {
 
     fn setup_user(conn: &PgConnection) -> User {
         User::create(create_user_data(), conn).unwrap()
-    }
-
-    #[test]
-    fn generate_password_hashes_password() {
-        let clear_password = "p455w0rd!";
-        let actual = User::generate_password(clear_password);
-        assert_ne!(clear_password, actual);
-        assert!(bcrypt::verify(clear_password, &actual));
     }
 
     #[test]
@@ -187,7 +180,7 @@ mod tests {
         let user = create_user_data();
 
         let user = User::update(Uuid::new_v4(), user, &conn);
-        assert!(matches!(user, Err(diesel::result::Error::NotFound)));
+        assert!(matches!(user, Err(UserError::UserNotFound)));
     }
 
     #[test]
