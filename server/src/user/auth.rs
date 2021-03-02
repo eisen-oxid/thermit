@@ -41,9 +41,11 @@ impl User {
     }
 }
 
+#[cfg(test)]
 mod test {
-    use pwhash::bcrypt;
     use super::*;
+    use crate::test_helpers::*;
+    use pwhash::bcrypt;
 
     #[test]
     fn generate_password_hashes_password() {
@@ -51,5 +53,40 @@ mod test {
         let actual = User::generate_password(clear_password);
         assert_ne!(clear_password, actual);
         assert!(bcrypt::verify(clear_password, &actual));
+    }
+
+    #[test]
+    fn correct_password_authenticates_user() {
+        let conn = connection();
+        setup_user(&conn);
+        let user_data = create_user_data();
+
+        assert!(User::authenticate(&conn, user_data).is_ok());
+    }
+
+    #[test]
+    fn incorrect_password_gives_incorrect_password() {
+        let conn = connection();
+        setup_user(&conn);
+        let mut user_data = create_user_data();
+        user_data.password = "Wrong password".to_string();
+
+        assert!(matches!(
+            User::authenticate(&conn, user_data),
+            Err(AuthenticationError::IncorrectPassword)
+        ));
+    }
+
+    #[test]
+    fn authentication_with_unknown_username_gives_user_not_found() {
+        let conn = connection();
+        setup_user(&conn);
+        let mut user_data = create_user_data();
+        user_data.username = "USER_NAME_DOES_NOT_EXIST".to_string();
+
+        assert!(matches!(
+            User::authenticate(&conn, user_data),
+            Err(AuthenticationError::UserNotFound)
+        ));
     }
 }
