@@ -115,17 +115,6 @@ mod tests {
     use crate::test_helpers::*;
     use pwhash::bcrypt;
 
-    fn create_user_data() -> UserData {
-        UserData {
-            username: String::from("testUser"),
-            password: String::from("12345678"),
-        }
-    }
-
-    fn setup_user(conn: &PgConnection) -> User {
-        User::create(create_user_data(), conn).unwrap()
-    }
-
     #[test]
     fn create_returns_new_user() {
         let conn = connection();
@@ -134,6 +123,17 @@ mod tests {
         let user = User::create(user_data.clone(), &conn).unwrap();
         assert_eq!(user.username, user_data.username);
         assert!(bcrypt::verify(user_data.password, &user.password));
+    }
+
+    #[test]
+    fn create_fails_when_username_is_taken() {
+        let conn = connection();
+
+        let user_data = create_user_data();
+        User::create(user_data.clone(), &conn).unwrap();
+
+        let user = User::create(user_data.clone(), &conn);
+        assert!(matches!(user, Err(UserError::UsernameTaken)));
     }
 
     #[test]
