@@ -24,7 +24,7 @@ impl User {
         conn: &PgConnection,
         user_data: UserData,
     ) -> Result<String, AuthenticationError> {
-        let user = User::find_by_username(&conn, &*user_data.username);
+        let user = User::_find_by_username(&conn, &*user_data.username);
         let user = match user {
             Err(e) => return Err(DatabaseError(e)),
             Ok(u) => u,

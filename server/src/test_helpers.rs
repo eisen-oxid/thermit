@@ -16,5 +16,6 @@ pub fn create_user_data(username: &str) -> UserData {
 }
 
 pub(crate) fn setup_user(conn: &PgConnection) -> User {
-    User::create(create_user_data("testUser"), conn).unwrap()
+    let response = User::create(create_user_data("testUser"), conn).unwrap();
+    User::_find(&conn, response.id).unwrap().unwrap()
 }

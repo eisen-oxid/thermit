@@ -20,6 +20,13 @@ pub struct UserData {
     pub password: String,
 }
 
+// Do not return passwords, write only the data we want to send out in this struct
+#[derive(Serialize, Debug)]
+pub struct UserResponse {
+    pub id: Uuid,
+    pub username: String,
+}
+
 #[derive(Debug)]
 pub enum UserError {
     UserNotFound,
@@ -29,22 +36,51 @@ pub enum UserError {
 }
 
 impl User {
-    pub fn find_all(conn: &PgConnection) -> Result<Vec<Self>, UserError> {
+    pub fn find_all(conn: &PgConnection) -> Result<Vec<UserResponse>, UserError> {
         use crate::schema::users::dsl::*;
 
-        let items = users.load::<User>(conn)?;
+        let all_users = users.load::<User>(conn)?;
+        let items = all_users
+            .into_iter()
+            .map(|u| UserResponse::from(u))
+            .collect::<Vec<UserResponse>>();
         Ok(items)
     }
 
-    pub fn find(conn: &PgConnection, user_id: Uuid) -> Result<Option<Self>, UserError> {
-        use crate::schema::users::dsl::*;
+    pub fn find(conn: &PgConnection, user_id: Uuid) -> Result<Option<UserResponse>, UserError> {
+        let user = User::_find(&conn, user_id)?;
 
-        let user = users.find(user_id).get_result::<User>(conn).optional()?;
-
-        Ok(user)
+        if let Some(u) = user {
+            Ok(Some(UserResponse::from(u)))
+        } else {
+            Ok(None)
+        }
     }
 
-    pub fn find_by_username(conn: &PgConnection, u: &str) -> Result<Option<User>, UserError> {
+    // Internal find, do not use in routes, as it returns the password
+    pub(crate) fn _find(conn: &PgConnection, user_id: Uuid) -> Result<Option<User>, UserError> {
+        use crate::schema::users::dsl::*;
+
+        Ok(users.find(user_id).get_result::<User>(conn).optional()?)
+    }
+
+    pub fn find_by_username(
+        conn: &PgConnection,
+        u: &str,
+    ) -> Result<Option<UserResponse>, UserError> {
+        match User::_find_by_username(&conn, u) {
+            Ok(user) => {
+                if let Some(u) = user {
+                    return Ok(Some(UserResponse::from(u)))
+                }
+                Ok(None)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    // Only for internal use, do not use this in a route, as it returns the password!
+    pub fn _find_by_username(conn: &PgConnection, u: &str) -> Result<Option<User>, UserError> {
         use crate::schema::users::dsl::*;
 
         let user = users
@@ -60,7 +96,7 @@ impl User {
         Ok(user.is_some())
     }
 
-    pub fn create(mut user_data: UserData, conn: &PgConnection) -> Result<Self, UserError> {
+    pub fn create(mut user_data: UserData, conn: &PgConnection) -> Result<UserResponse, UserError> {
         use crate::schema::users::dsl::*;
 
         user_data.password = User::generate_password(&*user_data.password);
@@ -69,17 +105,17 @@ impl User {
             return Err(UserError::UsernameTaken);
         }
 
-        let new_user = diesel::insert_into(users)
+        let new_user:User = diesel::insert_into(users)
             .values(&user_data)
             .get_result(conn)?;
-        Ok(new_user)
+        Ok(UserResponse::from(new_user))
     }
 
     pub fn update(
         user_id: Uuid,
         mut user_data: UserData,
         conn: &PgConnection,
-    ) -> Result<Self, UserError> {
+    ) -> Result<UserResponse, UserError> {
         use crate::schema::users::dsl::*;
 
         if User::username_taken(&conn, &*user_data.username)? {
@@ -90,15 +126,15 @@ impl User {
         if !user_data.password.is_empty() {
             user_data.password = User::generate_password(&*user_data.password);
         } else {
-            let old_password = User::find(&conn, user_id).unwrap().unwrap().password;
+            let old_password = User::_find(&conn, user_id).unwrap().unwrap().password;
             user_data.password = old_password;
         }
 
-        let user = diesel::update(users.find(user_id))
+        let user:User = diesel::update(users.find(user_id))
             .set(user_data)
             .get_result(conn)?;
 
-        Ok(user)
+        Ok(UserResponse::from(user))
     }
 
     pub fn destroy(conn: &PgConnection, user_id: Uuid) -> Result<usize, UserError> {
@@ -113,7 +149,6 @@ impl User {
 mod tests {
     use super::*;
     use crate::test_helpers::*;
-    use pwhash::bcrypt;
 
     #[test]
     fn create_returns_new_user() {
@@ -122,7 +157,6 @@ mod tests {
         let user_data = create_user_data("testUser");
         let user = User::create(user_data.clone(), &conn).unwrap();
         assert_eq!(user.username, user_data.username);
-        assert!(bcrypt::verify(user_data.password, &user.password));
     }
 
     #[test]
@@ -150,7 +184,7 @@ mod tests {
         let expected = setup_user(&conn);
         let user = User::find(&conn, expected.id).unwrap();
 
-        assert_eq!(Some(expected), user);
+        assert_eq!(expected.username, user.unwrap().username);
     }
 
     #[test]
@@ -165,7 +199,7 @@ mod tests {
         let conn = connection();
 
         setup_user(&conn);
-        User::create(create_user_data("user2"), &conn);
+        User::create(create_user_data("user2"), &conn).unwrap();
 
         let users = User::find_all(&conn).unwrap();
 
@@ -199,7 +233,6 @@ mod tests {
         let updated_user = User::update(user.id, update_user.clone(), &conn).unwrap();
 
         assert_eq!(updated_user.username, user.username);
-        assert!(bcrypt::verify(update_user.password, &updated_user.password));
     }
 
     #[test]
@@ -227,6 +260,15 @@ impl From<DieselError> for UserError {
             DieselError::DatabaseError(_, _) => UserError::DatabaseError,
             DieselError::NotFound => UserError::UserNotFound,
             _ => UserError::GenericError,
+        }
+    }
+}
+
+impl From<User> for UserResponse {
+    fn from(user: User) -> UserResponse {
+        UserResponse {
+            id: user.id,
+            username: user.username,
         }
     }
 }
