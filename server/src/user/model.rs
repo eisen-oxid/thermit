@@ -42,7 +42,7 @@ impl User {
         let all_users = users.load::<User>(conn)?;
         let items = all_users
             .into_iter()
-            .map( UserResponse::from)
+            .map(UserResponse::from)
             .collect::<Vec<UserResponse>>();
         Ok(items)
     }
@@ -185,6 +185,19 @@ mod tests {
         let user = User::find(&conn, expected.id).unwrap();
 
         assert_eq!(expected.username, user.unwrap().username);
+    }
+
+    #[test]
+    fn find_returns_no_password() {
+        let conn = connection();
+
+        let expected = setup_user(&conn);
+        let user = User::find(&conn, expected.id).unwrap().unwrap();
+        let user_password_hash = User::_find(&conn, expected.id).unwrap().unwrap().password;
+
+        let serialized_user = serde_json::to_string(&user).unwrap();
+
+        assert!(!serialized_user.contains(&*user_password_hash));
     }
 
     #[test]
