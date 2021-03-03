@@ -42,7 +42,7 @@ impl User {
         let all_users = users.load::<User>(conn)?;
         let items = all_users
             .into_iter()
-            .map(|u| UserResponse::from(u))
+            .map( UserResponse::from)
             .collect::<Vec<UserResponse>>();
         Ok(items)
     }
@@ -71,7 +71,7 @@ impl User {
         match User::_find_by_username(&conn, u) {
             Ok(user) => {
                 if let Some(u) = user {
-                    return Ok(Some(UserResponse::from(u)))
+                    return Ok(Some(UserResponse::from(u)));
                 }
                 Ok(None)
             }
@@ -105,7 +105,7 @@ impl User {
             return Err(UserError::UsernameTaken);
         }
 
-        let new_user:User = diesel::insert_into(users)
+        let new_user: User = diesel::insert_into(users)
             .values(&user_data)
             .get_result(conn)?;
         Ok(UserResponse::from(new_user))
@@ -130,7 +130,7 @@ impl User {
             user_data.password = old_password;
         }
 
-        let user:User = diesel::update(users.find(user_id))
+        let user: User = diesel::update(users.find(user_id))
             .set(user_data)
             .get_result(conn)?;
 
