@@ -6,7 +6,7 @@ table! {
 }
 
 table! {
-    rooms_users (room_id, user_id) {
+    rooms_users (user_id, room_id) {
         user_id -> Uuid,
         room_id -> Uuid,
         status -> Nullable<Varchar>,

@@ -1,3 +1,4 @@
+use crate::room::{Room, RoomData};
 use crate::user::{User, UserData};
 use diesel::prelude::*;
 
@@ -15,7 +16,21 @@ pub fn create_user_data(username: &str) -> UserData {
     }
 }
 
+pub fn create_room_data(room_name: &str) -> RoomData {
+    RoomData {
+        name: Some(String::from(room_name)),
+    }
+}
+
 pub(crate) fn setup_user(conn: &PgConnection) -> User {
-    let response = User::create(create_user_data("testUser"), conn).unwrap();
+    setup_user_with_username(conn, "testUser")
+}
+
+pub(crate) fn setup_user_with_username(conn: &PgConnection, username: &str) -> User {
+    let response = User::create(create_user_data(username), conn).unwrap();
     User::_find(&conn, response.id).unwrap().unwrap()
+}
+
+pub(crate) fn setup_room(conn: &PgConnection) -> Room {
+    Room::create(create_room_data("testRoom"), conn).unwrap()
 }
