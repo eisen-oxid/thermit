@@ -14,7 +14,13 @@ pub struct Room {
     pub name: Option<String>,
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq, Debug)]
+#[derive(Clone, Deserialize, Insertable, AsChangeset, Debug)]
+#[table_name = "rooms"]
+pub struct RoomData {
+    pub name: Option<String>,
+}
+
+#[derive(Identifiable, Queryable, Associations, Insertable, PartialEq, Debug)]
 #[belongs_to(Room)]
 #[primary_key(user_id, room_id)]
 #[table_name = "rooms_users"]
@@ -60,10 +66,22 @@ impl Room {
 
     pub fn add_users(
         conn: &PgConnection,
-        room_id: Uuid,
+        existing_room_id: Uuid,
         user_ids: Vec<Uuid>,
     ) -> Result<usize, RoomError> {
-        Err(RoomError::GenericError)
+        use crate::schema::rooms_users::dsl::*;
+
+        for user_id_to_add in user_ids.iter() {
+            let room_user = RoomUser {
+                user_id: *user_id_to_add,
+                room_id: existing_room_id,
+                status: None,
+            };
+            diesel::insert_into(rooms_users)
+                .values(room_user)
+                .execute(conn)?;
+        }
+        Ok(user_ids.len())
     }
 
     pub fn remove_users(
@@ -71,19 +89,45 @@ impl Room {
         room_id: Uuid,
         user_ids: Vec<Uuid>,
     ) -> Result<usize, RoomError> {
-        Err(RoomError::GenericError)
+        let mut count = 0;
+        let room = Room::find(conn, room_id)?.unwrap();
+        let rooms_users_pairs: Vec<RoomUser> = Room::get_room_users(conn, &room)?
+            .into_iter()
+            .filter(|rooms_users| user_ids.contains(&rooms_users.user_id))
+            .collect::<Vec<RoomUser>>();
+        for r_u in rooms_users_pairs.iter() {
+            count += diesel::delete(r_u).execute(conn)?;
+        }
+        Ok(count)
     }
 
-    pub fn create(room_name: &str, conn: &PgConnection) -> Result<Room, RoomError> {
-        Err(RoomError::GenericError)
+    pub fn create(room_data: RoomData, conn: &PgConnection) -> Result<Room, RoomError> {
+        use crate::schema::rooms::dsl::*;
+
+        let new_room: Room = diesel::insert_into(rooms)
+            .values(&room_data)
+            .get_result(conn)?;
+        Ok(new_room)
     }
 
     pub fn destroy(conn: &PgConnection, room_id: Uuid) -> Result<usize, RoomError> {
-        Err(RoomError::GenericError)
+        use crate::schema::rooms::dsl::*;
+
+        let count = diesel::delete(rooms.find(room_id)).execute(conn)?;
+        Ok(count)
     }
 
-    pub fn update(room_id: Uuid, room_name: &str, conn: &PgConnection) -> Result<Room, RoomError> {
-        Err(RoomError::GenericError)
+    pub fn update(
+        room_id: Uuid,
+        room_data: RoomData,
+        conn: &PgConnection,
+    ) -> Result<Room, RoomError> {
+        use crate::schema::rooms::dsl::*;
+
+        let room: Room = diesel::update(rooms.find(room_id))
+            .set(room_data)
+            .get_result(conn)?;
+        Ok(room)
     }
 }
 
