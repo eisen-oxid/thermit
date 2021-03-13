@@ -11,7 +11,7 @@ CREATE TABLE "rooms_users"
     user_id UUID,
     room_id UUID,
     status VARCHAR,
-    PRIMARY KEY (room_id, user_id),
+    PRIMARY KEY (user_id, room_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (room_id) REFERENCES rooms(id)
 );
