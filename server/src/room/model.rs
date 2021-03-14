@@ -4,6 +4,7 @@ use diesel::BelongingToDsl;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::room::RoomError::*;
 use crate::schema::rooms;
 use crate::schema::rooms_users;
 
@@ -65,12 +66,24 @@ impl Room {
             .collect::<Vec<Uuid>>())
     }
 
+    pub fn check_for_room_existence(conn: &PgConnection, room_id: Uuid) -> Result<bool, RoomError> {
+        let room = Room::find(conn, room_id)?;
+        match room {
+            None => Ok(false),
+            Some(_) => Ok(true),
+        }
+    }
+
     pub fn add_users(
         conn: &PgConnection,
         existing_room_id: Uuid,
         user_ids: Vec<Uuid>,
     ) -> Result<usize, RoomError> {
         use crate::schema::rooms_users::dsl::*;
+
+        if !Room::check_for_room_existence(conn, existing_room_id)? {
+            return Err(RoomNotFound);
+        };
 
         for user_id_to_add in user_ids.iter() {
             let room_user = RoomUser {
@@ -91,7 +104,13 @@ impl Room {
         user_ids: Vec<Uuid>,
     ) -> Result<usize, RoomError> {
         let mut count = 0;
+
+        if !Room::check_for_room_existence(conn, room_id)? {
+            return Err(RoomNotFound);
+        };
+
         let room = Room::find(conn, room_id)?.unwrap();
+
         let rooms_users_pairs: Vec<RoomUser> = Room::get_room_users(conn, &room)?
             .into_iter()
             .filter(|rooms_users| user_ids.contains(&rooms_users.user_id))
@@ -246,6 +265,24 @@ mod tests {
 
         assert_eq!(users.len(), 3);
         assert_eq!(users[0].user_id, user1.id);
+    }
+
+    #[test]
+    fn users_can_not_be_added_to_not_existing_room() {
+        let conn = connection();
+
+        let user1 = setup_user_with_username(&conn, "test user 1");
+        let user2 = setup_user_with_username(&conn, "test user 2");
+
+        let rooms_users_to_add = vec![user1.id, user2.id];
+
+        let result = Room::add_users(&conn, Uuid::new_v4(), rooms_users_to_add);
+
+        assert!(matches!(result, Err(RoomError::RoomNotFound)));
+
+        use crate::schema::rooms_users::dsl::*;
+        let room_user_list = rooms_users.load::<RoomUser>(&conn).unwrap();
+        assert_eq!(room_user_list.len(), 0);
     }
 
     #[test]
