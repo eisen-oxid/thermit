@@ -66,7 +66,7 @@ impl Room {
             .collect::<Vec<Uuid>>())
     }
 
-    pub fn check_for_room_existence(conn: &PgConnection, room_id: Uuid) -> Result<bool, RoomError> {
+    pub fn exists(conn: &PgConnection, room_id: Uuid) -> Result<bool, RoomError> {
         let room = Room::find(conn, room_id)?;
         match room {
             None => Ok(false),
@@ -81,7 +81,7 @@ impl Room {
     ) -> Result<usize, RoomError> {
         use crate::schema::rooms_users::dsl::*;
 
-        if !Room::check_for_room_existence(conn, existing_room_id)? {
+        if !Room::exists(conn, existing_room_id)? {
             return Err(RoomNotFound);
         };
 
@@ -105,11 +105,10 @@ impl Room {
     ) -> Result<usize, RoomError> {
         let mut count = 0;
 
-        if !Room::check_for_room_existence(conn, room_id)? {
-            return Err(RoomNotFound);
+        let room = match Room::find(conn, room_id)? {
+            None => return Err(RoomNotFound),
+            Some(r) => r,
         };
-
-        let room = Room::find(conn, room_id)?.unwrap();
 
         let rooms_users_pairs: Vec<RoomUser> = Room::get_room_users(conn, &room)?
             .into_iter()
