@@ -2,7 +2,7 @@
 extern crate diesel;
 extern crate dotenv;
 
-use actix_web::{web, App, HttpServer, middleware::Logger};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 
@@ -37,7 +37,11 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .data(pool.clone())
-            .service(web::scope("/api").service(web::scope("/v1").configure(user::init_routes)))
+            .service(
+                web::scope("/api/v1")
+                    .configure(user::init_routes)
+                    .configure(room::init_routes),
+            )
     })
     .bind(server_address)?
     .run()
