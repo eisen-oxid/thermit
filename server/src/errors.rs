@@ -4,6 +4,7 @@ use derive_more::{Display, Error};
 use serde::Serialize;
 use serde_json::json;
 
+use crate::room::RoomError;
 use crate::user::auth::AuthenticationError;
 use crate::user::UserError;
 use actix_web::error::BlockingError;
@@ -55,6 +56,25 @@ impl From<UserError> for ServiceError {
             UserError::UsernameTaken => ServiceError::Forbidden,
             UserError::DatabaseError => ServiceError::InternalServerError,
             UserError::GenericError => ServiceError::InternalServerError,
+        }
+    }
+}
+
+impl From<BlockingError<RoomError>> for ServiceError {
+    fn from(error: BlockingError<RoomError>) -> ServiceError {
+        match error {
+            BlockingError::Error(e) => ServiceError::from(e),
+            BlockingError::Canceled => ServiceError::InternalServerError,
+        }
+    }
+}
+
+impl From<RoomError> for ServiceError {
+    fn from(error: RoomError) -> ServiceError {
+        match error {
+            RoomError::GenericError => ServiceError::InternalServerError,
+            RoomError::DatabaseError => ServiceError::InternalServerError,
+            RoomError::RoomNotFound => ServiceError::NotFound,
         }
     }
 }
