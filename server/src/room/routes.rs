@@ -2,6 +2,7 @@ use crate::errors::ServiceError;
 use crate::room::{Room, RoomData};
 use crate::Pool;
 use actix_web::{delete, get, post, put, web, HttpResponse};
+use serde_json::json;
 use uuid::Uuid;
 
 #[get("/rooms")]
@@ -30,7 +31,7 @@ pub async fn find(
         .map_err(ServiceError::from)?;
 
     if let Some(room) = room {
-        Ok(HttpResponse::Ok().json(room))
+        Ok(get_json_response(&pool, room))
     } else {
         Err(ServiceError::NotFound)
     }
@@ -47,7 +48,7 @@ async fn create(
         .await
         .map_err(ServiceError::from)?;
 
-    Ok(HttpResponse::Ok().json(room))
+    Ok(get_json_response(&pool, room))
 }
 
 #[put("/rooms/{id}")]
@@ -60,7 +61,7 @@ pub async fn update(
     let room = web::block(move || Room::update(&conn, id.into_inner(), room_data.into_inner()))
         .await
         .map_err(ServiceError::from)?;
-    Ok(HttpResponse::Ok().json(room))
+    Ok(get_json_response(&pool, room))
 }
 
 #[delete("/rooms/{id}")]
@@ -79,6 +80,23 @@ pub async fn delete(
     } else {
         Ok(HttpResponse::NoContent().finish())
     }
+}
+
+fn get_json_response(pool: &web::Data<Pool>, room: Room) -> HttpResponse {
+    let conn = pool.get().expect("couldn't get db connection from pool");
+
+    let room_user_ids: Vec<Uuid> = Room::get_room_users(&conn, &room)
+        .unwrap()
+        .into_iter()
+        .map(|room_user| room_user.user_id)
+        .collect();
+
+    let room_json = json!({
+        "id": room.id,
+        "name": room.name,
+        "users": room_user_ids
+    });
+    HttpResponse::Ok().json(room_json)
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
