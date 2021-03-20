@@ -26,7 +26,7 @@ pub struct RoomData {
 #[primary_key(user_id, room_id)]
 #[table_name = "rooms_users"]
 pub struct RoomUser {
-    user_id: Uuid,
+    pub(crate) user_id: Uuid,
     room_id: Uuid,
     status: Option<String>,
 }
