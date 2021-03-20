@@ -21,3 +21,8 @@ To start the server, a `.env` file must be created that contains some settings. 
 
 We use the [env_logger](https://docs.rs/env_logger/0.8.3/env_logger/) for logging.
 See [Enable logging](https://docs.rs/env_logger/0.8.3/env_logger/#enabling-logging) for configurations.
+
+#### Seeding
+
+To create some test data, you can use the script `seed.sh` in the seed directory. Replace the password in the code with the password you set for the database.
+This will create some example data to get started. All users have `123456` as password.
