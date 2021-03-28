@@ -16,3 +16,8 @@ To install use `cargo install diesel_cli --no-default-features --features postgr
 With Diesel installed, you can run migrations with `diesel migration run`. This will create the needed tables.
 
 To start the server, a `.env` file must be created that contains some settings. You can find an example in `.env.example`.
+
+### Logging
+
+We use the [env_logger](https://docs.rs/env_logger/0.8.3/env_logger/) for logging.
+See [Enable logging](https://docs.rs/env_logger/0.8.3/env_logger/#enabling-logging) for configurations.
