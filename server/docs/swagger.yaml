@@ -1,0 +1,168 @@
+openapi: "3.0.0"
+info:
+  description: "API for the Thermit server"
+  version: "0.1.0"
+  title: "Thermit API"
+servers:
+  - url: "https://someserver/api/v1"
+
+paths:
+  /users:
+    get:
+      summary: Get a list of all users
+      tags:
+        - Users
+      responses:
+        200:
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResponse'
+    post:
+      summary: Add a new user
+      tags:
+          - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Name of the user
+                password:
+                  type: string
+                  description: Password of the user
+      responses:
+        200:
+          description: Label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      summary: Get specific user
+      tags:
+        - Users
+      responses:
+        200:
+          description: Specific user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        404:
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update specific user
+      tags:
+        - Users
+      responses:
+        200:
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        404:
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete specific user
+      tags:
+        - Users
+      responses:
+        204:
+          description: User deleted
+        404:
+          $ref: '#/components/responses/NotFound'
+  /auth:
+    post:
+      summary: Authenticate via username/password
+      tags:
+          - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Name of the user
+                password:
+                  type: string
+                  description: Password of the user
+      responses:
+        200:
+          description: Auth token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Auth token
+        403:
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  schemas:
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Id of the user
+        username:
+          type: string
+          description: Name of the user
+
+    Error:
+      type: object
+      properties:
+        msg:
+          type: string
+          description: the error message
+
+  responses:
+    Error:
+      description: Unknown Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Access not allowed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      description: The user Id
+      required: true
+      schema:
+        type: string
+        format: uuid
