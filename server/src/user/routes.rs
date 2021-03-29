@@ -4,6 +4,7 @@ use crate::Pool;
 use actix_web::error::BlockingError;
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use uuid::Uuid;
+use serde_json::json;
 
 #[get("/users")]
 pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
@@ -12,11 +13,7 @@ pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
     let users = web::block(move || User::find_all(&conn))
         .await
         .map_err(ServiceError::from)?;
-    if users.is_empty() {
-        Err(ServiceError::NoContent)
-    } else {
-        Ok(HttpResponse::Ok().json(users))
-    }
+    Ok(HttpResponse::Ok().json(json!({"users": users})))
 }
 
 #[get("/users/{id}")]
