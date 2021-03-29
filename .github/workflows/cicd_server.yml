@@ -41,6 +41,7 @@ jobs:
     - name: Test
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost/thermit-server-test
+        TEST_DATABASE_URL: postgres://postgres:postgres@localhost/thermit-server-test
       run: |
         cd server
         diesel migration run
