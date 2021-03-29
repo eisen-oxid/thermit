@@ -302,4 +302,24 @@ mod tests {
         assert_eq!(users.len(), 2);
         assert_eq!(users[0].user_id, user2.id);
     }
+
+    #[test]
+    fn deleting_user_removes_user_from_room() {
+        let conn = connection();
+
+        let room = setup_room(&conn);
+        let user1 = setup_user_with_username(&conn, "test user 1");
+        let user2 = setup_user_with_username(&conn, "test user 2");
+
+        let rooms_users = vec![user1.id, user2.id];
+
+        Room::add_users(&conn, room.id, rooms_users).unwrap();
+
+        use crate::user::User;
+        User::destroy(&conn, user1.id).unwrap();
+
+        let users = Room::get_room_users(&conn, &room).unwrap();
+
+        assert_eq!(users.len(), 1);
+    }
 }
