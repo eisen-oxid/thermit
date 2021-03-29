@@ -88,7 +88,7 @@ pub async fn authenticate(
     let conn = pool.get().expect("couldn't get db connection from pool");
     let auth_token = web::block(move || User::authenticate(&conn, user_data.into_inner())).await;
     match auth_token {
-        Ok(token) => Ok(HttpResponse::Ok().json(token)),
+        Ok(token) => Ok(HttpResponse::Ok().json(json!({"token": token}))),
         Err(e) => match e {
             BlockingError::Error(e) => Err(ServiceError::from(e)),
             BlockingError::Canceled => Err(ServiceError::InternalServerError),
