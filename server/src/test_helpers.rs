@@ -1,11 +1,13 @@
 use crate::room::{Room, RoomData};
 use crate::user::{User, UserData};
 use diesel::prelude::*;
+use diesel_migrations::*;
 
 pub fn connection() -> PgConnection {
-    let url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let url = dotenv::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
     let conn = PgConnection::establish(&url).unwrap();
     conn.begin_test_transaction().unwrap();
+    run_pending_migrations(&conn).unwrap();
     conn
 }
 
