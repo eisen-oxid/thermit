@@ -1,0 +1,13 @@
+name: Run markdownlint
+
+on: ['push']
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Run Markdown linter
+        uses: bewuethr/mdl-action@v1
+        with:
+          style-file: .github/workflows/markdown-style.rb
