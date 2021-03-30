@@ -14,11 +14,7 @@ pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
         .await
         .map_err(ServiceError::from)?;
 
-    if rooms.is_empty() {
-        Err(ServiceError::NoContent)
-    } else {
-        Ok(HttpResponse::Ok().json(rooms))
-    }
+    Ok(HttpResponse::Ok().json(json!({ "rooms": rooms })))
 }
 
 #[get("/rooms/{id}")]
@@ -121,7 +117,7 @@ pub async fn get_users(
         .map(|room_user| room_user.user_id)
         .collect();
 
-    Ok(HttpResponse::Ok().json(room_user_ids))
+    Ok(HttpResponse::Ok().json(json!({ "users": room_user_ids })))
 }
 
 #[delete("/rooms/{room_id}/users/{user_id}")]

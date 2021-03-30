@@ -18,9 +18,6 @@ pub enum ServiceError {
     NotFound,
 
     #[display(fmt = "Internal Server Error")]
-    NoContent,
-
-    #[display(fmt = "Internal Server Error")]
     Forbidden,
 }
 impl ServiceError {
@@ -84,7 +81,6 @@ impl ResponseError for ServiceError {
         match *self {
             ServiceError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             ServiceError::NotFound => StatusCode::NOT_FOUND,
-            ServiceError::NoContent => StatusCode::NO_CONTENT,
             ServiceError::Forbidden => StatusCode::FORBIDDEN,
         }
     }
@@ -96,9 +92,6 @@ impl ResponseError for ServiceError {
             }
             ServiceError::NotFound => {
                 HttpResponse::NotFound().json(ServiceError::json_message("Not found"))
-            }
-            ServiceError::NoContent => {
-                HttpResponse::NoContent().json(ServiceError::json_message("No content"))
             }
             ServiceError::Forbidden => {
                 HttpResponse::Forbidden().json(ServiceError::json_message("Access forbidden"))
