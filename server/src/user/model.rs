@@ -64,6 +64,12 @@ impl User {
         Ok(users.find(user_id).get_result::<User>(conn).optional()?)
     }
 
+    pub fn exists(conn: &PgConnection, user_id: Uuid) -> Result<bool, UserError> {
+        use crate::schema::users::dsl::*;
+
+        Ok(users.find(user_id).first::<User>(conn).is_ok())
+    }
+
     pub fn find_by_username(
         conn: &PgConnection,
         u: &str,

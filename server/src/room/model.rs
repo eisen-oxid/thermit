@@ -78,24 +78,46 @@ impl Room {
         conn: &PgConnection,
         existing_room_id: Uuid,
         user_ids: Vec<Uuid>,
-    ) -> Result<usize, RoomError> {
+    ) -> Result<Vec<Uuid>, RoomError> {
         use crate::schema::rooms_users::dsl::*;
 
         if !Room::exists(conn, existing_room_id)? {
             return Err(RoomNotFound);
         };
 
-        for user_id_to_add in user_ids.iter() {
+        let mut added_users = vec![];
+
+        let existing_users = Room::get_user_ids(conn, existing_room_id)?;
+
+        for user_id_to_add in user_ids.into_iter() {
             let room_user = RoomUser {
-                user_id: *user_id_to_add,
+                user_id: user_id_to_add,
                 room_id: existing_room_id,
                 status: None,
             };
+
+            // Check if the user to add exists
+            use crate::user::User;
+            match User::exists(conn, user_id_to_add) {
+                Err(_) => return Err(DatabaseError),
+                Ok(bool) => {
+                    if !bool {
+                        continue; // Do not add user
+                    }
+                }
+            };
+
+            // Check if the user is already in the room
+            if existing_users.contains(&user_id_to_add) {
+                continue; // Do not add user
+            }
+
             diesel::insert_into(rooms_users)
                 .values(room_user)
                 .execute(conn)?;
+            added_users.push(user_id_to_add);
         }
-        Ok(user_ids.len())
+        Ok(added_users)
     }
 
     pub fn remove_users(
