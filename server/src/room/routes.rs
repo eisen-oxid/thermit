@@ -94,9 +94,10 @@ pub async fn add_user(
 ) -> Result<HttpResponse, ServiceError> {
     let conn = pool.get().expect("couldn't get db connection from pool");
 
-    Room::add_users(&conn, room_id.into_inner(), vec![user_data.into_inner().id])?;
+    let added_users =
+        Room::add_users(&conn, room_id.into_inner(), vec![user_data.into_inner().id])?;
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(HttpResponse::Ok().json(json!({ "users": added_users })))
 }
 
 #[get("/rooms/{id}/users")]
