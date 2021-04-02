@@ -289,6 +289,50 @@ mod tests {
     }
 
     #[test]
+    fn non_existent_user_can_not_be_added_to_room() {
+        let conn = connection();
+
+        let room = setup_room(&conn);
+
+        let user1 = setup_user_with_username(&conn, "test user 1");
+
+        let rooms_users = vec![user1.id, Uuid::new_v4()];
+
+        let added_users = Room::add_users(&conn, room.id, rooms_users).unwrap();
+
+        assert_eq!(added_users.len(), 1);
+        assert_eq!(added_users[0], user1.id);
+
+        let users = Room::get_room_users(&conn, &room).unwrap();
+
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0].user_id, user1.id);
+    }
+
+    #[test]
+    fn user_can_not_be_added_twice_to_room() {
+        let conn = connection();
+
+        let room = setup_room(&conn);
+
+        let user1 = setup_user_with_username(&conn, "test user 1");
+
+        let mut added_users = Room::add_users(&conn, room.id, vec![user1.id]).unwrap();
+
+        assert_eq!(added_users.len(), 1);
+        assert_eq!(added_users[0], user1.id);
+
+        added_users = Room::add_users(&conn, room.id, vec![user1.id]).unwrap();
+
+        assert_eq!(added_users.len(), 0);
+
+        let users = Room::get_room_users(&conn, &room).unwrap();
+
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0].user_id, user1.id);
+    }
+
+    #[test]
     fn users_can_not_be_added_to_not_existing_room() {
         let conn = connection();
 
