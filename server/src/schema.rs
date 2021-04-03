@@ -2,6 +2,8 @@ table! {
     rooms (id) {
         id -> Uuid,
         name -> Nullable<Varchar>,
+        created -> Timestamp,
+        updated -> Timestamp,
     }
 }
 
@@ -10,6 +12,8 @@ table! {
         user_id -> Uuid,
         room_id -> Uuid,
         status -> Nullable<Varchar>,
+        created -> Timestamp,
+        updated -> Timestamp,
     }
 }
 
@@ -18,6 +22,8 @@ table! {
         id -> Uuid,
         username -> Varchar,
         password -> Varchar,
+        created -> Timestamp,
+        updated -> Timestamp,
     }
 }
 

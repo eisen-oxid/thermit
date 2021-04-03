@@ -2,6 +2,7 @@ use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use chrono::NaiveDateTime;
 
 use crate::schema::users;
 
@@ -11,6 +12,8 @@ pub struct User {
     pub id: Uuid,
     pub username: String,
     pub password: String,
+    pub created: NaiveDateTime,
+    pub updated: NaiveDateTime,
 }
 // decode request data
 #[derive(Clone, Deserialize, Insertable, AsChangeset, Debug)]

@@ -7,12 +7,15 @@ use uuid::Uuid;
 use crate::room::RoomError::*;
 use crate::schema::rooms;
 use crate::schema::rooms_users;
+use chrono::{NaiveDateTime, Utc};
 
 #[derive(Serialize, Identifiable, Deserialize, Queryable, Insertable, PartialEq, Debug)]
 #[table_name = "rooms"]
 pub struct Room {
     pub id: Uuid,
     pub name: Option<String>,
+    pub created: NaiveDateTime,
+    pub updated: NaiveDateTime,
 }
 
 #[derive(Clone, Deserialize, Insertable, AsChangeset, Debug)]
@@ -29,6 +32,8 @@ pub struct RoomUser {
     pub(crate) user_id: Uuid,
     room_id: Uuid,
     status: Option<String>,
+    created: NaiveDateTime,
+    updated: NaiveDateTime,
 }
 
 #[derive(Debug)]
@@ -94,6 +99,8 @@ impl Room {
                 user_id: user_id_to_add,
                 room_id: existing_room_id,
                 status: None,
+                created: Utc::now().naive_utc(),
+                updated: Utc::now().naive_utc(),
             };
 
             // Check if the user to add exists
