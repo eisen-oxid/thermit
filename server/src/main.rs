@@ -54,7 +54,11 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .data(pool.clone())
-            .service(web::scope("/api").service(web::scope("/v1").configure(user::init_routes)))
+            .service(
+                web::scope("/api/v1")
+                    .configure(user::init_routes)
+                    .configure(room::init_routes),
+            )
     });
 
     if using_tls {
