@@ -152,6 +152,8 @@ fn get_json_response(pool: &web::Data<Pool>, room: Room) -> Result<HttpResponse,
     let room_json = json!({
         "id": room.id,
         "name": room.name,
+        "created" : room.created,
+        "updated" : room.updated,
         "users": room_user_ids
     });
     Ok(HttpResponse::Ok().json(room_json))
