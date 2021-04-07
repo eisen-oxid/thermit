@@ -1,4 +1,14 @@
 table! {
+    messages (id) {
+        id -> Uuid,
+        room_id -> Uuid,
+        author -> Uuid,
+        content -> Varchar,
+        message_encryption -> Message_encryption_type,
+    }
+}
+
+table! {
     rooms (id) {
         id -> Uuid,
         name -> Nullable<Varchar>,
@@ -27,10 +37,13 @@ table! {
     }
 }
 
+joinable!(messages -> rooms (room_id));
+joinable!(messages -> users (author));
 joinable!(rooms_users -> rooms (room_id));
 joinable!(rooms_users -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
+    messages,
     rooms,
     rooms_users,
     users,
