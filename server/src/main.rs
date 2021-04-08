@@ -11,6 +11,7 @@ mod errors;
 mod room;
 mod schema;
 mod user;
+mod message;
 
 #[cfg(test)]
 mod test_helpers;

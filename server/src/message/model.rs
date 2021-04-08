@@ -1,9 +1,10 @@
 use diesel::prelude::*;
-use diesel::result::Error as DieselError;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::schema::users;
+use crate::schema::messages;
+use chrono::NaiveDateTime;
+use crate::message::MessageError::MessageNotFound;
 
 #[derive(Serialize, Deserialize, Queryable, Insertable, PartialEq, Debug)]
 #[table_name = "messages"]
@@ -26,28 +27,32 @@ pub struct MessageData {
     pub author: Uuid,
 }
 
-pub enum MessageEncryptionType {
+use diesel_derive_enum::DbEnum;
+#[derive(Serialize, Deserialize, Debug, PartialEq, DbEnum, Clone)]
+#[DieselType = "Message_encryption"]
+pub enum MessageEncryption {
     Clear,
 }
 
-pub enum MessageError {
 
+pub enum MessageError {
+    MessageNotFound
 }
 
 impl Message {
     pub fn find(conn: &PgConnection, message_id: Uuid) -> Result<Option<Message>, MessageError> {
-
+        Err(MessageNotFound)
     }
 
     pub fn create(message_data: MessageData, conn: &PgConnection) -> Result<Message, MessageError> {
-        use crate::schema::users::dsl::*;
+        Err(MessageNotFound)
     }
 
     pub fn update(message_id: Uuid, message_data: MessageData,conn: &PgConnection,) -> Result<Message, MessageError> {
-        use crate::schema::users::dsl::*;
+        Err(MessageNotFound)
     }
 
     pub fn destroy(message_id: Uuid, conn: &PgConnection) -> Result<usize, MessageError> {
-        use crate::schema::users::dsl::*;
+        Err(MessageNotFound)
     }
 }
