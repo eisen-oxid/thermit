@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- by default the postgres ENUM values correspond to snake_cased Rust enum variant names
-CREATE TYPE message_encryption_type AS ENUM ('clear');
+CREATE TYPE message_encryption AS ENUM ('clear');
 
 CREATE TABLE "messages"
 (
@@ -11,7 +11,7 @@ CREATE TABLE "messages"
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
     FOREIGN KEY (author) REFERENCES users(id) ON DELETE CASCADE,
     content VARCHAR NOT NULL,
-    message_encryption message_encryption_type NOT NULL,
+    encryption message_encryption NOT NULL,
     created timestamp NOT NULL default current_timestamp,
     updated timestamp NOT NULL default current_timestamp
 );
