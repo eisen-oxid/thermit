@@ -27,7 +27,7 @@ CREATE TRIGGER room_update_date_trigger
     FOR EACH ROW
     EXECUTE PROCEDURE last_upd_trig();
 
-CREATE TRIGGER rooms_updates_update_date_trigger
-    BEFORE UPDATE ON rooms
+CREATE TRIGGER rooms_users_updates_update_date_trigger
+    BEFORE UPDATE ON rooms_users
     FOR EACH ROW
     EXECUTE PROCEDURE last_upd_trig();
