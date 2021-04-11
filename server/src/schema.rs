@@ -30,4 +30,8 @@ table! {
 joinable!(rooms_users -> rooms (room_id));
 joinable!(rooms_users -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(rooms, rooms_users, users,);
+allow_tables_to_appear_in_same_query!(
+    rooms,
+    rooms_users,
+    users,
+);

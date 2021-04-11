@@ -1,8 +1,8 @@
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::NaiveDateTime;
 
 use crate::schema::users;
 
@@ -28,6 +28,8 @@ pub struct UserData {
 pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
+    pub created: NaiveDateTime,
+    pub updated: NaiveDateTime,
 }
 
 #[derive(Debug)]
@@ -274,6 +276,24 @@ mod tests {
         let count = User::destroy(&conn, user.id).unwrap();
         assert_eq!(count, 1);
     }
+
+    #[test]
+    fn updated_date_is_updated_when_fields_are_changed() {
+        let conn = connection();
+
+        let user = setup_user(&conn);
+        assert!(user.updated.eq(&user.created));
+
+        let update_user = UserData {
+            username: String::from("new_username"),
+            password: String::from("new_password"),
+        };
+
+        let response = User::update(user.id, update_user, &conn).unwrap();
+
+        assert!(!response.updated.eq(&response.created));
+        assert!(response.updated.gt(&response.created))
+    }
 }
 
 impl From<DieselError> for UserError {
@@ -291,6 +311,8 @@ impl From<User> for UserResponse {
         UserResponse {
             id: user.id,
             username: user.username,
+            created: user.created,
+            updated: user.updated,
         }
     }
 }
