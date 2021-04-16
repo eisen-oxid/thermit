@@ -47,7 +47,7 @@ jobs:
         cd server
         diesel migration run
         cargo test --verbose && cargo tarpaulin -v --out Xml
-    - name: Upload to codecov.io
+    - name: Upload coverage to codecov.io
       uses: codecov/codecov-action@v1
       with:
         token: ${{secrets.CODECOV_TOKEN}}
