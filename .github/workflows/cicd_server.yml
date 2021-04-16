@@ -34,7 +34,7 @@ jobs:
       run: |
         cd server
         cargo install diesel_cli --no-default-features --features postgres
-        cargo install tarpaulin
+        cargo install cargo-tarpaulin
     - name: Check
       run: cd server && cargo check --verbose
     - name: Lint
