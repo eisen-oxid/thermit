@@ -34,6 +34,7 @@ jobs:
       run: |
         cd server
         cargo install diesel_cli --no-default-features --features postgres
+        cargo install tarpaulin
     - name: Check
       run: cd server && cargo check --verbose
     - name: Lint
@@ -45,4 +46,8 @@ jobs:
       run: |
         cd server
         diesel migration run
-        cargo test --verbose
+        cargo test --verbose && cargo tarpaulin -v --out Xml
+    - name: Upload to codecov.io
+      uses: codecov/codecov-action@v1
+      with:
+        fail_ci_if_error: true
