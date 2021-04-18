@@ -31,3 +31,8 @@ You have to add the key and certificate in the PEM format and specify the path i
 
 To create some test data, you can use the script `seed.sh` in the seed directory. Replace the password in the code with the password you set for the database.
 This will create some example data to get started. All users have `123456` as password.
+
+## Tests
+
+Tests can be run with `cargo test`. Our CI also uses [tarpaulin](https://github.com/xd009642/tarpaulin) to generate code coverage.
+This tool can be installed with `cargo install cargo-tarpaulin` and run with `cargo tarpaulin -v`.
