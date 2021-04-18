@@ -13,7 +13,7 @@ ALTER TABLE rooms_users
 CREATE FUNCTION last_upd_trig() RETURNS trigger
     LANGUAGE plpgsql AS
 $$BEGIN
-    NEW.updated := current_timestamp;
+    NEW.updated := CLOCK_TIMESTAMP();
     RETURN NEW;
 END;$$;
 
