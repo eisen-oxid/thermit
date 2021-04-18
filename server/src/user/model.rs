@@ -24,12 +24,17 @@ pub struct UserData {
 }
 
 // Do not return passwords, write only the data we want to send out in this struct
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
     pub created: NaiveDateTime,
     pub updated: NaiveDateTime,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserListResponse {
+    pub users: Vec<UserResponse>,
 }
 
 #[derive(Debug)]
@@ -41,7 +46,7 @@ pub enum UserError {
 }
 
 impl User {
-    pub fn find_all(conn: &PgConnection) -> Result<Vec<UserResponse>, UserError> {
+    pub fn find_all(conn: &PgConnection) -> Result<UserListResponse, UserError> {
         use crate::schema::users::dsl::*;
 
         let all_users = users.load::<User>(conn)?;
@@ -49,7 +54,7 @@ impl User {
             .into_iter()
             .map(UserResponse::from)
             .collect::<Vec<UserResponse>>();
-        Ok(items)
+        Ok(UserListResponse { users: items })
     }
 
     pub fn find(conn: &PgConnection, user_id: Uuid) -> Result<Option<UserResponse>, UserError> {
@@ -215,7 +220,7 @@ mod tests {
     fn find_all_returns_empty_list_when_no_users_exist() {
         let conn = connection();
 
-        assert_eq!(User::find_all(&conn).unwrap().len(), 0);
+        assert_eq!(User::find_all(&conn).unwrap().users.len(), 0);
     }
 
     #[test]
@@ -227,8 +232,8 @@ mod tests {
 
         let users = User::find_all(&conn).unwrap();
 
-        assert_eq!(users.len(), 2);
-        assert_ne!(users[0].id, users[1].id);
+        assert_eq!(users.users.len(), 2);
+        assert_ne!(users.users[0].id, users.users[1].id);
     }
 
     #[test]

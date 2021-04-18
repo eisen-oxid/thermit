@@ -3,7 +3,6 @@ use crate::user::model::{User, UserData};
 use crate::Pool;
 use actix_web::error::BlockingError;
 use actix_web::{delete, get, post, put, web, HttpResponse};
-use serde_json::json;
 use uuid::Uuid;
 
 #[get("/users")]
@@ -13,7 +12,7 @@ pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
     let users = web::block(move || User::find_all(&conn))
         .await
         .map_err(ServiceError::from)?;
-    Ok(HttpResponse::Ok().json(json!({ "users": users })))
+    Ok(HttpResponse::Ok().json(users))
 }
 
 #[get("/users/{id}")]
@@ -88,7 +87,7 @@ pub async fn authenticate(
     let conn = pool.get().expect("couldn't get db connection from pool");
     let auth_token = web::block(move || User::authenticate(&conn, user_data.into_inner())).await;
     match auth_token {
-        Ok(token) => Ok(HttpResponse::Ok().json(json!({ "token": token }))),
+        Ok(token) => Ok(HttpResponse::Ok().json(token)),
         Err(e) => match e {
             BlockingError::Error(e) => Err(ServiceError::from(e)),
             BlockingError::Canceled => Err(ServiceError::InternalServerError),

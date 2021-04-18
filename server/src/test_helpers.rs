@@ -1,7 +1,30 @@
+use crate::test_db::CustomConnectionManager;
 use crate::room::{Room, RoomData};
 use crate::user::{User, UserData};
+use crate::Pool;
+use actix_web::dev::{HttpServiceFactory, ServiceResponse};
+use actix_web::test::TestRequest;
+use actix_web::App;
 use diesel::prelude::*;
 use diesel_migrations::*;
+
+pub fn connection_pool() -> Pool {
+    let database_url = dotenv::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
+    let manager = CustomConnectionManager::<PgConnection>::new(database_url);
+    return r2d2::Pool::builder()
+        .max_size(1)
+        .build(manager)
+        .expect("Failed to create pool.");
+}
+
+pub async fn test_request<F: HttpServiceFactory + 'static>(
+    pool: Pool,
+    service: F,
+    req: TestRequest,
+) -> ServiceResponse {
+    let mut app = actix_web::test::init_service(App::new().data(pool).service(service)).await;
+    actix_web::test::call_service(&mut app, req.to_request()).await
+}
 
 pub fn connection() -> PgConnection {
     let url = dotenv::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");

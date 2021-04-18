@@ -7,6 +7,9 @@ use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 
+#[cfg(test)]
+use crate::test_db::CustomConnectionManager;
+
 mod errors;
 mod room;
 mod schema;
@@ -14,8 +17,16 @@ mod user;
 
 #[cfg(test)]
 mod test_helpers;
+#[cfg(test)]
+mod test_db;
 
-pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
+#[cfg(test)]
+pub type DbConnectionManager = CustomConnectionManager<PgConnection>;
+
+#[cfg(not(test))]
+pub type DbConnectionManager = ConnectionManager<PgConnection>;
+
+pub type Pool = r2d2::Pool<DbConnectionManager>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -24,7 +35,7 @@ async fn main() -> std::io::Result<()> {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     // create db connection pool
-    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    let manager = DbConnectionManager::new(database_url);
     let pool: Pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");
