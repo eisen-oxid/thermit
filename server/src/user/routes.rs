@@ -13,7 +13,7 @@ pub async fn list(pool: web::Data<Pool>) -> Result<HttpResponse, ServiceError> {
     let users = web::block(move || User::find_all(&conn))
         .await
         .map_err(ServiceError::from)?;
-    Ok(HttpResponse::Ok().json(json!({ "users": users })))
+    Ok(HttpResponse::Ok().json(users))
 }
 
 #[get("/users/{id}")]
