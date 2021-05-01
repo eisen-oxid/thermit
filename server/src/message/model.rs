@@ -26,6 +26,7 @@ pub struct MessageData {
     pub author: Uuid,
 }
 
+#[derive(Debug)]
 pub enum MessageError {
     MessageNotFound,
     DatabaseError,
@@ -33,7 +34,7 @@ pub enum MessageError {
 }
 
 impl Message {
-    pub fn find(conn: &PgConnection, message_id: Uuid) -> Result<Option<Message>, MessageError> {
+    pub fn find(message_id: Uuid, conn: &PgConnection) -> Result<Option<Message>, MessageError> {
         use crate::schema::messages::dsl::*;
 
         Ok(messages
@@ -79,5 +80,100 @@ impl From<DieselError> for MessageError {
             DieselError::NotFound => MessageError::MessageNotFound,
             _ => MessageError::GenericError,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_helpers::*;
+
+    fn setup_hello_thermit_message(conn: &PgConnection) -> Result<Message, MessageError> {
+        let room = setup_room(conn);
+        let user = setup_user(conn);
+        let message_data = create_message_data("Hello thermit!", room.id, user.id);
+        Message::create(message_data, conn)
+    }
+
+    #[test]
+    fn create_returns_new_message() {
+        let conn = connection();
+
+        let message = setup_hello_thermit_message(&conn).unwrap();
+        assert_eq!(message.content, "Hello thermit!");
+    }
+
+    #[test]
+    fn create_returns_error_when_user_and_room_do_not_exist() {
+        let conn = connection();
+
+        let message_data = create_message_data("Hello thermit!", Uuid::new_v4(), Uuid::new_v4());
+        let message_result = Message::create(message_data, &conn);
+
+        assert!(matches!(message_result, Err(MessageError::DatabaseError)));
+    }
+
+    #[test]
+    fn find_returns_message() {
+        let conn = connection();
+
+        let message = setup_hello_thermit_message(&conn).unwrap();
+        let found_message = Message::find(message.id, &conn).unwrap().unwrap();
+        assert_eq!(found_message.content, "Hello thermit!");
+    }
+
+    #[test]
+    fn find_returns_no_message_when_message_does_not_exist() {
+        let conn = connection();
+
+        let _message = setup_hello_thermit_message(&conn).unwrap();
+        let found_message = Message::find(Uuid::new_v4(), &conn).unwrap();
+        assert!(matches!(found_message, None));
+    }
+
+    #[test]
+    fn update_updates_message() {
+        let conn = connection();
+
+        let message = setup_hello_thermit_message(&conn).unwrap();
+        let updated_message_data =
+            create_message_data("Bye thermit!", message.room_id, message.author);
+        let updated_message = Message::update(message.id, updated_message_data, &conn).unwrap();
+        assert_eq!(updated_message.id, message.id);
+        assert_eq!(updated_message.content, "Bye thermit!");
+    }
+
+    #[test]
+    fn update_returns_error_when_message_does_not_exist() {
+        let conn = connection();
+
+        let message = setup_hello_thermit_message(&conn).unwrap();
+        let updated_message_data =
+            create_message_data("Bye thermit!", message.room_id, message.author);
+        let updated_message = Message::update(Uuid::new_v4(), updated_message_data, &conn);
+        assert!(matches!(
+            updated_message,
+            Err(MessageError::MessageNotFound)
+        ));
+    }
+
+    #[test]
+    fn destroy_deletes_message() {
+        let conn = connection();
+
+        let message = setup_hello_thermit_message(&conn).unwrap();
+        let deleted_count = Message::destroy(message.id, &conn).unwrap();
+        assert_eq!(deleted_count, 1);
+        let found_message = Message::find(message.id, &conn).unwrap();
+        assert!(matches!(found_message, None));
+    }
+
+    #[test]
+    fn destroy_returns_zero_when_message_does_not_exist() {
+        let conn = connection();
+
+        setup_hello_thermit_message(&conn).unwrap();
+        let deletion_result = Message::destroy(Uuid::new_v4(), &conn).unwrap();
+        assert_eq!(deletion_result, 0);
     }
 }
