@@ -43,6 +43,11 @@ impl Message {
             .optional()?)
     }
 
+    pub fn find_all_by_room(room: Uuid, conn: &PgConnection) -> Result<Vec<Message>, MessageError> {
+        use crate::schema::messages::dsl::*;
+        Ok(messages.filter(room_id.eq(room)).load::<Message>(conn)?)
+    }
+
     pub fn create(message_data: MessageData, conn: &PgConnection) -> Result<Message, MessageError> {
         use crate::schema::messages::dsl::*;
 
@@ -129,6 +134,27 @@ mod tests {
         let _message = setup_hello_thermit_message(&conn).unwrap();
         let found_message = Message::find(Uuid::new_v4(), &conn).unwrap();
         assert!(matches!(found_message, None));
+    }
+
+    #[test]
+    fn find_all_by_room_returns_messages_for_room() {
+        let conn = connection();
+
+        let room1 = setup_room(&conn);
+        let room2 = setup_room(&conn);
+        let user1 = setup_user_with_username(&conn, "user1");
+        let user2 = setup_user_with_username(&conn, "user2");
+        let message_data1 = create_message_data("How are you?", room1.id, user1.id);
+        let message_data2 = create_message_data("I'm great!", room1.id, user2.id);
+        let message_data3 = create_message_data("Hello thermit!", room2.id, user1.id);
+        Message::create(message_data1, &conn).unwrap();
+        Message::create(message_data2, &conn).unwrap();
+        Message::create(message_data3, &conn).unwrap();
+
+        let messages_for_room1 = Message::find_all_by_room(room1.id, &conn).unwrap();
+        let messages_for_room2 = Message::find_all_by_room(room2.id, &conn).unwrap();
+        assert_eq!(messages_for_room1.len(), 2);
+        assert_eq!(messages_for_room2.len(), 1);
     }
 
     #[test]
