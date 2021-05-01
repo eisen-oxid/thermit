@@ -1,12 +1,9 @@
 table! {
-    use diesel::sql_types::*;
-    use crate::message::Message_encryption;
     messages (id) {
         id -> Uuid,
         room_id -> Uuid,
         author -> Uuid,
         content -> Varchar,
-        encryption -> Message_encryption,
         created -> Timestamp,
         updated -> Timestamp,
     }

@@ -13,7 +13,6 @@ pub struct Message {
     pub room_id: Uuid,
     pub author: Uuid,
     pub content: String,
-    pub encryption: MessageEncryption,
     pub created: NaiveDateTime,
     pub updated: NaiveDateTime,
 }
@@ -26,14 +25,6 @@ pub struct MessageData {
     pub room_id: Uuid,
     pub author: Uuid,
 }
-
-use diesel_derive_enum::DbEnum;
-#[derive(Serialize, Deserialize, Debug, PartialEq, DbEnum, Clone)]
-#[DieselType = "Message_encryption"]
-pub enum MessageEncryption {
-    Clear,
-}
-
 
 pub enum MessageError {
     MessageNotFound
