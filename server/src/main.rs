@@ -8,10 +8,10 @@ use diesel::r2d2::{self, ConnectionManager};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 
 mod errors;
+mod message;
 mod room;
 mod schema;
 mod user;
-mod message;
 
 #[cfg(test)]
 mod test_helpers;

@@ -1,7 +1,11 @@
-use crate::room::{Room, RoomData};
-use crate::user::{User, UserData};
+use crate::{
+    message::MessageData,
+    room::{Room, RoomData},
+    user::{User, UserData},
+};
 use diesel::prelude::*;
 use diesel_migrations::*;
+use uuid::Uuid;
 
 pub fn connection() -> PgConnection {
     let url = dotenv::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
@@ -21,6 +25,14 @@ pub fn create_user_data(username: &str) -> UserData {
 pub fn create_room_data(room_name: &str) -> RoomData {
     RoomData {
         name: Some(String::from(room_name)),
+    }
+}
+
+pub fn create_message_data(content: &str, room_id: Uuid, author: Uuid) -> MessageData {
+    MessageData {
+        content: String::from(content),
+        room_id,
+        author,
     }
 }
 
