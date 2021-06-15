@@ -33,7 +33,7 @@ async fn main() -> std::io::Result<()> {
     // load tls
     let mut using_tls = false;
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    if let Ok(_) = std::env::var("USE_TLS") {
+    if std::env::var("USE_TLS").is_ok() {
         let key_path =
             std::env::var("TLS_KEY_PATH").expect("TLS_KEY_PATH must be set when using TLS");
         let cert_path =
