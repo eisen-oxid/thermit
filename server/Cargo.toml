@@ -20,4 +20,3 @@ pwhash = "1"
 env_logger = "0.8.3"
 openssl = "0.10"
 chrono = { version = "0.4.19", features = ["serde"]}
-diesel-derive-enum = { version = "1", features = ["postgres"] }
