@@ -93,10 +93,13 @@ mod tests {
     use super::*;
     use crate::test_helpers::*;
 
+    static HELLO_THERMIT: &str = "Hello thermit!";
+    static BYE_THERMIT: &str = "Bye thermit!";
+
     fn setup_hello_thermit_message(conn: &PgConnection) -> Result<Message, MessageError> {
         let room = setup_room(conn);
         let user = setup_user(conn);
-        let message_data = create_message_data("Hello thermit!", room.id, user.id);
+        let message_data = create_message_data(HELLO_THERMIT, room.id, user.id);
         Message::create(message_data, conn)
     }
 
@@ -105,14 +108,14 @@ mod tests {
         let conn = connection();
 
         let message = setup_hello_thermit_message(&conn).unwrap();
-        assert_eq!(message.content, "Hello thermit!");
+        assert_eq!(message.content, HELLO_THERMIT);
     }
 
     #[test]
     fn create_returns_error_when_user_and_room_do_not_exist() {
         let conn = connection();
 
-        let message_data = create_message_data("Hello thermit!", Uuid::new_v4(), Uuid::new_v4());
+        let message_data = create_message_data(HELLO_THERMIT, Uuid::new_v4(), Uuid::new_v4());
         let message_result = Message::create(message_data, &conn);
 
         assert!(matches!(message_result, Err(MessageError::DatabaseError)));
@@ -124,7 +127,7 @@ mod tests {
 
         let message = setup_hello_thermit_message(&conn).unwrap();
         let found_message = Message::find(message.id, &conn).unwrap().unwrap();
-        assert_eq!(found_message.content, "Hello thermit!");
+        assert_eq!(found_message.content, HELLO_THERMIT);
     }
 
     #[test]
@@ -146,7 +149,7 @@ mod tests {
         let user2 = setup_user_with_username(&conn, "user2");
         let message_data1 = create_message_data("How are you?", room1.id, user1.id);
         let message_data2 = create_message_data("I'm great!", room1.id, user2.id);
-        let message_data3 = create_message_data("Hello thermit!", room2.id, user1.id);
+        let message_data3 = create_message_data(HELLO_THERMIT, room2.id, user1.id);
         Message::create(message_data1, &conn).unwrap();
         Message::create(message_data2, &conn).unwrap();
         Message::create(message_data3, &conn).unwrap();
@@ -163,10 +166,10 @@ mod tests {
 
         let message = setup_hello_thermit_message(&conn).unwrap();
         let updated_message_data =
-            create_message_data("Bye thermit!", message.room_id, message.author);
+            create_message_data(BYE_THERMIT, message.room_id, message.author);
         let updated_message = Message::update(message.id, updated_message_data, &conn).unwrap();
         assert_eq!(updated_message.id, message.id);
-        assert_eq!(updated_message.content, "Bye thermit!");
+        assert_eq!(updated_message.content, BYE_THERMIT);
     }
 
     #[test]
@@ -175,7 +178,7 @@ mod tests {
 
         let message = setup_hello_thermit_message(&conn).unwrap();
         let updated_message_data =
-            create_message_data("Bye thermit!", message.room_id, message.author);
+            create_message_data(BYE_THERMIT, message.room_id, message.author);
         let updated_message = Message::update(Uuid::new_v4(), updated_message_data, &conn);
         assert!(matches!(
             updated_message,
