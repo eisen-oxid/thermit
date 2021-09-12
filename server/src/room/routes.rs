@@ -1,4 +1,5 @@
 use crate::errors::ServiceError;
+use crate::message::Message;
 use crate::room::{Room, RoomData};
 use crate::Pool;
 use actix_web::{delete, get, post, put, web, HttpResponse};
@@ -141,6 +142,20 @@ pub async fn remove_user(
     }
 }
 
+#[get("/rooms/{id}/messages")]
+pub async fn get_messages(
+    pool: web::Data<Pool>,
+    room_id: web::Path<Uuid>,
+) -> Result<HttpResponse, ServiceError> {
+    let conn = pool.get().expect("couldn't get db connection from pool");
+
+    let message_result = Message::find_all_by_room(room_id.into_inner(), &conn);
+    match message_result {
+        Ok(messages) => Ok(HttpResponse::Ok().json(json!({ "messages": messages }))),
+        Err(message_error) => Err(ServiceError::from(message_error)),
+    }
+}
+
 fn get_json_response(pool: &web::Data<Pool>, room: Room) -> Result<HttpResponse, ServiceError> {
     let conn = pool.get().expect("couldn't get db connection from pool");
 
@@ -169,4 +184,6 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(add_user);
     config.service(get_users);
     config.service(remove_user);
+
+    config.service(get_messages);
 }
