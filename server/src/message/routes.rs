@@ -21,3 +21,7 @@ pub async fn find(
         Err(ServiceError::NotFound)
     }
 }
+
+pub fn init_routes(config: &mut web::ServiceConfig) {
+    config.service(find);
+}

@@ -58,7 +58,8 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api/v1")
                     .configure(user::init_routes)
-                    .configure(room::init_routes),
+                    .configure(room::init_routes)
+                    .configure(message::init_routes),
             )
     });
 
