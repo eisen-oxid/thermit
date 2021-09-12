@@ -4,11 +4,11 @@ use derive_more::{Display, Error};
 use serde::Serialize;
 use serde_json::json;
 
+use crate::message::MessageError;
 use crate::room::RoomError;
 use crate::user::auth::AuthenticationError;
 use crate::user::UserError;
 use actix_web::error::BlockingError;
-use crate::message::MessageError;
 
 #[derive(Debug, Display, Error, Serialize)]
 pub enum ServiceError {

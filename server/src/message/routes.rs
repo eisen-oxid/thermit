@@ -1,5 +1,5 @@
 use crate::errors::ServiceError;
-use crate::message::{Message};
+use crate::message::Message;
 use crate::Pool;
 use actix_web::{get, web, HttpResponse};
 use uuid::Uuid;
