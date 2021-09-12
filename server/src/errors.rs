@@ -8,6 +8,7 @@ use crate::room::RoomError;
 use crate::user::auth::AuthenticationError;
 use crate::user::UserError;
 use actix_web::error::BlockingError;
+use crate::message::MessageError;
 
 #[derive(Debug, Display, Error, Serialize)]
 pub enum ServiceError {
@@ -72,6 +73,25 @@ impl From<RoomError> for ServiceError {
             RoomError::GenericError => ServiceError::InternalServerError,
             RoomError::DatabaseError => ServiceError::InternalServerError,
             RoomError::RoomNotFound => ServiceError::NotFound,
+        }
+    }
+}
+
+impl From<BlockingError<MessageError>> for ServiceError {
+    fn from(error: BlockingError<MessageError>) -> ServiceError {
+        match error {
+            BlockingError::Error(e) => ServiceError::from(e),
+            BlockingError::Canceled => ServiceError::InternalServerError,
+        }
+    }
+}
+
+impl From<MessageError> for ServiceError {
+    fn from(error: MessageError) -> ServiceError {
+        match error {
+            MessageError::GenericError => ServiceError::InternalServerError,
+            MessageError::DatabaseError => ServiceError::InternalServerError,
+            MessageError::MessageNotFound => ServiceError::NotFound,
         }
     }
 }
