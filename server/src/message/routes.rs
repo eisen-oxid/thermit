@@ -1,7 +1,7 @@
 use crate::errors::ServiceError;
-use crate::message::Message;
+use crate::message::{Message, MessageData};
 use crate::Pool;
-use actix_web::{get, web, HttpResponse};
+use actix_web::{get, post, web, HttpResponse};
 use uuid::Uuid;
 
 #[get("/messages/{id}")]
@@ -22,6 +22,21 @@ pub async fn find(
     }
 }
 
+#[post("/messages")]
+async fn create(
+    pool: web::Data<Pool>,
+    message_data: web::Json<MessageData>,
+) -> Result<HttpResponse, ServiceError> {
+    let conn = pool.get().expect("couldn't get db connection from pool");
+
+    let message = web::block(move || Message::create(message_data.into_inner(), &conn))
+        .await
+        .map_err(ServiceError::from)?;
+
+    Ok(HttpResponse::Ok().json(message))
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(find);
+    config.service(create);
 }
