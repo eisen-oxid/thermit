@@ -42,7 +42,7 @@ pub(crate) fn setup_user(conn: &PgConnection) -> User {
 
 pub(crate) fn setup_user_with_username(conn: &PgConnection, username: &str) -> User {
     let response = User::create(create_user_data(username), conn).unwrap();
-    User::_find(&conn, response.id).unwrap().unwrap()
+    User::_find(conn, response.id).unwrap().unwrap()
 }
 
 pub(crate) fn setup_room(conn: &PgConnection) -> Room {

@@ -53,7 +53,7 @@ impl User {
     }
 
     pub fn find(conn: &PgConnection, user_id: Uuid) -> Result<Option<UserResponse>, UserError> {
-        let user = User::_find(&conn, user_id)?;
+        let user = User::_find(conn, user_id)?;
 
         if let Some(u) = user {
             Ok(Some(UserResponse::from(u)))
@@ -79,7 +79,7 @@ impl User {
         conn: &PgConnection,
         u: &str,
     ) -> Result<Option<UserResponse>, UserError> {
-        match User::_find_by_username(&conn, u) {
+        match User::_find_by_username(conn, u) {
             Ok(user) => {
                 if let Some(u) = user {
                     return Ok(Some(UserResponse::from(u)));
@@ -112,7 +112,7 @@ impl User {
 
         user_data.password = User::generate_password(&*user_data.password);
 
-        if User::username_taken(&conn, &*user_data.username)? {
+        if User::username_taken(conn, &*user_data.username)? {
             return Err(UserError::UsernameTaken);
         }
 
@@ -129,7 +129,7 @@ impl User {
     ) -> Result<UserResponse, UserError> {
         use crate::schema::users::dsl::*;
 
-        if User::username_taken(&conn, &*user_data.username)? {
+        if User::username_taken(conn, &*user_data.username)? {
             return Err(UserError::UsernameTaken);
         }
 
@@ -137,7 +137,7 @@ impl User {
         if !user_data.password.is_empty() {
             user_data.password = User::generate_password(&*user_data.password);
         } else {
-            let old_password = User::_find(&conn, user_id).unwrap().unwrap().password;
+            let old_password = User::_find(conn, user_id).unwrap().unwrap().password;
             user_data.password = old_password;
         }
 
@@ -177,7 +177,7 @@ mod tests {
         let user_data = create_user_data("testUser");
         User::create(user_data.clone(), &conn).unwrap();
 
-        let user = User::create(user_data.clone(), &conn);
+        let user = User::create(user_data, &conn);
         assert!(matches!(user, Err(UserError::UsernameTaken)));
     }
 
@@ -254,7 +254,7 @@ mod tests {
         // Update user manually
         user.username = update_user.username.clone();
 
-        let updated_user = User::update(user.id, update_user.clone(), &conn).unwrap();
+        let updated_user = User::update(user.id, update_user, &conn).unwrap();
 
         assert_eq!(updated_user.username, user.username);
     }
